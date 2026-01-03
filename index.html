@@ -5,267 +5,265 @@
 <title>HackoAI • Chat Interface</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+<!-- Markdown + Syntax Highlight -->
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github-dark.min.css">
+<script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/highlight.min.js"></script>
+
 <style>
-* { box-sizing: border-box; margin:0; padding:0; }
+*{box-sizing:border-box;margin:0;padding:0}
 
-body {
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-  background: #f4f4f5;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
+/* ===== THEME ===== */
+:root{
+  --bg:#f4f4f5;--panel:#fff;--chat:#f9fafb;
+  --border:#e5e7eb;--user:#2563eb;--bot:#e5e7eb;
+  --text:#111827;--muted:#6b7280;
+}
+body.dark{
+  --bg:#020617;--panel:#020617;--chat:#020617;
+  --border:#1f2937;--user:#2563eb;--bot:#0f172a;
+  --text:#e5e7eb;--muted:#94a3b8;
 }
 
-.app {
-  width: 100%;
-  max-width: 600px;
-  height: 90vh;
-  background: #fff;
-  border-radius: 12px;
-  display: flex;
-  flex-direction: column;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-  overflow: hidden;
+body{
+  font-family:system-ui,sans-serif;
+  background:var(--bg);
+  display:flex;justify-content:center;align-items:center;
+  height:100vh;color:var(--text);
 }
 
-header {
-  padding: 16px;
-  border-bottom: 1px solid #e5e7eb;
-  font-weight: 600;
-  font-size: 18px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: #f9fafb;
+.app{
+  width:100%;max-width:650px;height:90vh;
+  background:var(--panel);border-radius:14px;
+  display:flex;flex-direction:column;
+  box-shadow:0 20px 40px rgba(0,0,0,.3);
+  overflow:hidden;
 }
 
-#chat {
-  flex: 1;
-  padding: 16px;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  background: #f9fafb;
+header{
+  padding:14px 16px;
+  border-bottom:1px solid var(--border);
+  display:flex;justify-content:space-between;align-items:center;
+  font-weight:600;
 }
 
-.msg {
-  max-width: 80%;
-  padding: 10px 14px;
-  border-radius: 12px;
-  line-height: 1.4;
-  word-wrap: break-word;
-  opacity: 0;
-  transform: translateY(10px);
-  animation: fadeIn 0.3s forwards;
-  position: relative;
+.controls{display:flex;gap:8px}
+select,button.toggle{
+  background:transparent;border:1px solid var(--border);
+  color:var(--text);padding:6px 10px;border-radius:8px;
+  cursor:pointer;
 }
 
-.user {
-  align-self: flex-end;
-  background: #2563eb;
-  color: #fff;
+/* ===== CHAT ===== */
+#chat{
+  flex:1;padding:16px;overflow-y:auto;
+  display:flex;flex-direction:column;gap:16px;
+  background:var(--chat);
 }
 
-.bot {
-  align-self: flex-start;
-  background: #e5e7eb;
-  color: #111827;
+.msg{
+  max-width:85%;padding:12px 14px;
+  border-radius:12px;line-height:1.5;
+  opacity:0;animation:fadeIn .25s forwards;
+  position:relative;
 }
 
-.timestamp {
-  font-size: 10px;
-  color: #6b7280;
-  position: absolute;
-  bottom: -14px;
-  right: 10px;
+.user{align-self:flex-end;background:var(--user);color:#fff}
+.bot{align-self:flex-start;background:var(--bot);color:var(--text)}
+
+.timestamp{
+  font-size:10px;color:var(--muted);margin-top:6px;
 }
 
-img {
-  max-width: 100%;
-  border-radius: 12px;
-  margin-top: 6px;
+/* ===== CODE BLOCKS ===== */
+pre{
+  position:relative;
+  background:#020617;
+  border-radius:10px;
+  padding:12px;
+  margin-top:8px;
+  overflow-x:auto;
 }
 
-footer {
-  display: flex;
-  gap: 8px;
-  padding: 12px;
-  border-top: 1px solid #e5e7eb;
-  background: #f9fafb;
+pre code{font-size:13px}
+
+.copy-btn{
+  position:absolute;
+  top:6px;right:6px;
+  background:#2563eb;
+  border:none;color:#fff;
+  font-size:11px;
+  padding:4px 8px;
+  border-radius:6px;
+  cursor:pointer;
 }
 
-input {
-  flex: 1;
-  padding: 12px;
-  border-radius: 8px;
-  border: 1px solid #d1d5db;
-  font-size: 15px;
-  outline: none;
+/* ===== FOOTER ===== */
+footer{
+  display:flex;gap:8px;padding:12px;
+  border-top:1px solid var(--border);
 }
 
-select {
-  border-radius: 8px;
-  border: 1px solid #d1d5db;
-  padding: 8px;
+input{
+  flex:1;padding:12px;border-radius:8px;
+  border:1px solid var(--border);
+  background:transparent;color:var(--text);
+  outline:none;
 }
 
-button {
-  padding: 0 18px;
-  border: none;
-  border-radius: 8px;
-  background: #2563eb;
-  color: #fff;
-  font-weight: 600;
-  cursor: pointer;
+button.send{
+  padding:0 18px;border-radius:8px;
+  border:none;background:#2563eb;
+  color:#fff;font-weight:600;cursor:pointer;
 }
 
-button:hover {
-  filter: brightness(1.1);
+/* ===== LOADER ===== */
+.spinner{
+  width:18px;height:18px;
+  border:3px solid var(--border);
+  border-top:3px solid #2563eb;
+  border-radius:50%;
+  animation:spin 1s linear infinite;
 }
 
-/* Fade-in animation */
-@keyframes fadeIn {
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Loading spinner */
-.spinner {
-  border: 3px solid #e5e7eb;
-  border-top: 3px solid #2563eb;
-  border-radius: 50%;
-  width: 20px;
-  height: 20px;
-  animation: spin 1s linear infinite;
-  margin: 0 auto;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes fadeIn{to{opacity:1}}
 </style>
 </head>
-<body>
+
+<body class="dark">
 
 <div class="app">
   <header>
     HackoAI
-    <select id="mode">
-      <option value="chat">Chat</option>
-      <option value="image">Image</option>
-    </select>
+    <div class="controls">
+      <select id="mode">
+        <option value="chat">Chat</option>
+        <option value="image">Image</option>
+      </select>
+      <button class="toggle" onclick="toggleTheme()">🌗</button>
+    </div>
   </header>
 
   <div id="chat"></div>
 
   <footer>
     <input id="input" placeholder="Type a message…" />
-    <button onclick="send()">Send</button>
+    <button class="send" onclick="send()">Send</button>
   </footer>
 </div>
 
 <script>
-const chat = document.getElementById("chat");
-const input = document.getElementById("input");
-const mode = document.getElementById("mode");
+const chat=document.getElementById("chat");
+const input=document.getElementById("input");
+const mode=document.getElementById("mode");
 
-function add(role, content, showTimestamp = true) {
-  const d = document.createElement("div");
-  d.className = "msg " + role;
+/* ===== MEMORY ===== */
+const KEY="hackoai_chat";
+let history=JSON.parse(localStorage.getItem(KEY)||"[]");
+history.forEach(m=>render(m.role,m.content,false));
 
-  if (typeof content === "string") {
-    d.textContent = content;
-  } else {
-    d.appendChild(content);
-  }
+function save(role,content){
+  history.push({role,content});
+  localStorage.setItem(KEY,JSON.stringify(history));
+}
 
-  if(showTimestamp){
-    const ts = document.createElement("div");
-    ts.className = "timestamp";
-    const now = new Date();
-    ts.textContent = now.getHours().toString().padStart(2,'0') + ":" + now.getMinutes().toString().padStart(2,'0');
-    d.appendChild(ts);
-  }
+/* ===== UTILS ===== */
+function time(){
+  const d=new Date();
+  return d.getHours().toString().padStart(2,'0')+":"+
+         d.getMinutes().toString().padStart(2,'0');
+}
+
+/* ===== RENDER ===== */
+function render(role,content,saveIt=true){
+  const d=document.createElement("div");
+  d.className="msg "+role;
+  d.innerHTML=marked.parse(content);
+
+  d.querySelectorAll("pre code").forEach(block=>{
+    hljs.highlightElement(block);
+
+    const btn=document.createElement("button");
+    btn.className="copy-btn";
+    btn.textContent="COPY";
+    btn.onclick=()=>{
+      navigator.clipboard.writeText(block.textContent);
+      btn.textContent="COPIED";
+      setTimeout(()=>btn.textContent="COPY",1000);
+    };
+    block.parentElement.appendChild(btn);
+  });
+
+  const t=document.createElement("div");
+  t.className="timestamp";
+  t.textContent=time();
+  d.appendChild(t);
 
   chat.appendChild(d);
-  chat.scrollTop = chat.scrollHeight;
+  chat.scrollTop=chat.scrollHeight;
+
+  if(saveIt) save(role,content);
   return d;
 }
 
-async function send() {
-  const text = input.value.trim();
-  if (!text) return;
-  input.value = "";
-  add("user", text);
+/* ===== TYPEWRITER ===== */
+function streamBot(text){
+  const d=document.createElement("div");
+  d.className="msg bot";
+  chat.appendChild(d);
 
-  // show loading
-  const loading = document.createElement("div");
-  loading.className = "msg bot";
-  const spin = document.createElement("div");
-  spin.className = "spinner";
-  loading.appendChild(spin);
-  chat.appendChild(loading);
-  chat.scrollTop = chat.scrollHeight;
+  let i=0;
+  const interval=setInterval(()=>{
+    d.innerHTML=marked.parse(text.slice(0,i++));
+    chat.scrollTop=chat.scrollHeight;
+    if(i>text.length){
+      clearInterval(interval);
+      render("bot",text);
+      d.remove();
+    }
+  },15);
+}
 
-  try {
-    const res = await fetch("/.netlify/functions/hackoAI", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text, mode: mode.value })
+/* ===== SEND ===== */
+async function send(){
+  const text=input.value.trim();
+  if(!text) return;
+  input.value="";
+
+  render("user",text);
+
+  const loading=render("bot","<div class='spinner'></div>",false);
+
+  try{
+    const res=await fetch("/.netlify/functions/hackoAI",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({text,mode:mode.value})
     });
 
-    const raw = await res.text();
-    let data;
-    try {
-      data = JSON.parse(raw);
-    } catch {
-      loading.remove();
-      add("bot", "Server returned invalid JSON");
-      return;
-    }
-
-    if (!res.ok) {
-      loading.remove();
-      add("bot", data.error || "Backend error");
-      return;
-    }
-
-    // IMAGE MODE
-    if (mode.value === "image") {
-      loading.remove();
-      if (!data.data || !data.data[0]) {
-        add("bot", "Image generation failed");
-        return;
-      }
-      const img = document.createElement("img");
-      img.src = data.data[0].url;
-      add("bot", img);
-      return;
-    }
-
-    // CHAT MODE
-    if (!data.choices || !data.choices[0]) {
-      loading.remove();
-      add("bot", "Malformed AI response");
-      return;
-    }
-
+    const data=await res.json();
     loading.remove();
-    add("bot", data.choices[0].message.content);
 
-  } catch (e) {
-    console.error(e);
+    if(mode.value==="image"){
+      render("bot",`![image](${data.data[0].url})`);
+    }else{
+      streamBot(data.choices[0].message.content);
+    }
+
+  }catch{
     loading.remove();
-    add("bot", "Network / Function crash");
+    render("bot","**Network error. Server folded 💀**");
   }
 }
 
-input.addEventListener("keydown", e => { if(e.key === "Enter") send(); });
+function toggleTheme(){
+  document.body.classList.toggle("dark");
+}
+
+input.addEventListener("keydown",e=>{
+  if(e.key==="Enter") send();
+});
 </script>
 
 </body>
