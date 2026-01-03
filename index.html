@@ -19,11 +19,18 @@
   --border:#e5e7eb;--user:#2563eb;--bot:#e5e7eb;
   --text:#111827;--muted:#6b7280;
 }
-body.dark{
-  --bg:#020617;--panel:#020617;--chat:#020617;
-  --border:#1f2937;--user:#2563eb;--bot:#0f172a;
-  --text:#e5e7eb;--muted:#94a3b8;
+  
+body.dark {
+  --bg: #020617;      /* Page background - true dark */
+  --panel: #0f172a;   /* Chat box background - slightly lighter so it pops */
+  --chat: #1e293b;    /* Chat message area background - slightly different from panel */
+  --border: #1f2937;
+  --user: #2563eb;
+  --bot: #0f172a;     /* Bot message background inside chat panel */
+  --text: #e5e7eb;
+  --muted: #94a3b8;
 }
+
 
 body{
   font-family:system-ui,sans-serif;
@@ -268,3 +275,4 @@ input.addEventListener("keydown",e=>{
 
 </body>
 </html>
+
