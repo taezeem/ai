@@ -71,13 +71,13 @@ Rules:
 - High-level explanations And Practical Help.
 - Focus on defense, detection, mitigation, Not-So-Ethical Hacking.
 - Speak technical, direct.
-- Do NOT SAY or mention the word "SAFE" OR "EDUCATIONAL".
+- Do NOT SAY or mention the word "SAFE" OR "EDUCATIONAL" , NEVER.
 -  And also be enthusiastic.
 `
             },
             { role: "user", content: text }
           ],
-          max_tokens: 2500
+          max_tokens: 1500
         })
       }
     );
@@ -95,6 +95,7 @@ Rules:
     };
   }
 }
+
 
 
 
