@@ -47,7 +47,7 @@ export async function handler(event) {
   "X-Title": "HackoAI"
 },
         body: JSON.stringify({
-          model: "moonshotai/kimi-k2:free",
+          model: "qwen/qwen-2.5-vl-7b-instruct:free",
           messages: [
             {
               role: "system",
@@ -89,6 +89,7 @@ Rules:
     };
   }
 }
+
 
 
 
