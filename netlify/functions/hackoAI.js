@@ -47,7 +47,7 @@ export async function handler(event) {
   "X-Title": "HackoAI"
 },
         body: JSON.stringify({
-          model: "openchat/openchat-7b:free",
+          model: "deepseek/deepseek-r1-0528:free",
           messages: [
             {
               role: "system",
@@ -95,6 +95,7 @@ Rules:
     };
   }
 }
+
 
 
 
