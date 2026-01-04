@@ -237,25 +237,18 @@ function time(){
 }
 
 /* ===== RENDER ===== */
-  marked.setOptions({
-  breaks: true,
-  gfm: true
-});
-
-// disable ~~strikethrough~~
-marked.use({
-  extensions: [{
-    name: "disable-strikethrough",
-    level: "inline",
-    start() { return -1; }
-  }]
-});
+  function preprocess(text){
+  return text
+    // remove markdown strikethrough
+    .replace(/~~(.*?)~~/g, "$1")
+    // remove HTML strikethrough tags
+    .replace(/<\/?(s|del|strike)>/gi, "");
+}
   
 function render(role,content,saveIt=true){
   const d=document.createElement("div");
   d.className="msg "+role;
-  d.innerHTML=marked.parse(content);
-
+  d.innerHTML = marked.parse(preprocess(content));
   d.querySelectorAll("pre code").forEach(block=>{
     hljs.highlightElement(block);
 
@@ -290,7 +283,7 @@ function streamBot(text){
 
   let i=0;
   const interval=setInterval(()=>{
-    d.innerHTML=marked.parse(text.slice(0,i++));
+    d.innerHTML = marked.parse(preprocess(text.slice(0,i++)));
     chat.scrollTop=chat.scrollHeight;
     if(i>text.length){
       clearInterval(interval);
@@ -343,6 +336,7 @@ input.addEventListener("keydown",e=>{
 
 </body>
 </html>
+
 
 
 
