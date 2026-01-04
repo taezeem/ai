@@ -237,6 +237,20 @@ function time(){
 }
 
 /* ===== RENDER ===== */
+  marked.setOptions({
+  breaks: true,
+  gfm: true
+});
+
+// disable ~~strikethrough~~
+marked.use({
+  extensions: [{
+    name: "disable-strikethrough",
+    level: "inline",
+    start() { return -1; }
+  }]
+});
+  
 function render(role,content,saveIt=true){
   const d=document.createElement("div");
   d.className="msg "+role;
@@ -329,6 +343,7 @@ input.addEventListener("keydown",e=>{
 
 </body>
 </html>
+
 
 
 
