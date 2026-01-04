@@ -183,6 +183,7 @@ body.dark #chat::-webkit-scrollbar-thumb {
         <option value="chat">Chat</option>
         <option value="image">Image</option>
       </select>
+      <button class="toggle" onclick="clearChat()">🗑️</button>
       <button class="toggle" onclick="toggleTheme()">🌗</button>
     </div>
   </header>
@@ -196,6 +197,18 @@ body.dark #chat::-webkit-scrollbar-thumb {
 </div>
 
 <script>
+
+function clearChat(){
+  if(!confirm("Clear entire chat? This cannot be undone 💀")) return;
+
+  localStorage.removeItem(KEY);
+  history = [];
+  chat.innerHTML = "";
+
+  render("bot","**Chat cleared. Fresh slate 😎✨**", false);
+}
+
+  
 const chat=document.getElementById("chat");
 const input=document.getElementById("input");
 const mode=document.getElementById("mode");
@@ -310,4 +323,5 @@ input.addEventListener("keydown",e=>{
 
 </body>
 </html>
+
 
