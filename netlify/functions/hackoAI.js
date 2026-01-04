@@ -14,13 +14,16 @@ export async function handler(event) {
   }
 
   try {
+    // IMAGE MODE
     if (mode === "image") {
   const res = await fetch("https://openrouter.ai/api/v1/images/generations", {
     method: "POST",
     headers: {
-      "Authorization": `Bearer ${API_KEY}`,
-      "Content-Type": "application/json"
-    },
+  "Authorization": `Bearer ${API_KEY}`,
+  "Content-Type": "application/json",
+  "HTTP-Referer": "https://hackoai.netlify.app",
+  "X-Title": "HackoAI"
+},
     body: JSON.stringify({
       model: "stabilityai/sdxl:free",
       prompt: text,
@@ -37,10 +40,12 @@ export async function handler(event) {
       "https://openrouter.ai/api/v1/chat/completions",
       {
         method: "POST",
-        headers: {
-          "Authorization": `Bearer ${API_KEY}`,
-          "Content-Type": "application/json"
-        },
+       headers: {
+  "Authorization": `Bearer ${API_KEY}`,
+  "Content-Type": "application/json",
+  "HTTP-Referer": "https://hackoai.netlify.app",
+  "X-Title": "HackoAI"
+},
         body: JSON.stringify({
           model: "moonshotai/kimi-k2:free",
           messages: [
@@ -84,6 +89,7 @@ Rules:
     };
   }
 }
+
 
 
 
