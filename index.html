@@ -212,6 +212,9 @@ select,button.toggle{
   border-radius:12px;line-height:1.5;
   opacity:0;animation:fadeIn .25s forwards;
   position:relative;word-wrap:break-word;
+  word-wrap: break-word; /* wrap long words */
+  overflow-wrap: anywhere; /* break super long URLs / code */
+  max-width: 100%; /* never go beyond container */
 }
 
 .msg:hover .msg-actions{opacity:1;}
@@ -286,6 +289,9 @@ input{
   border:1px solid var(--border);
   background:transparent;color:var(--text);
   outline:none;
+  min-width: 0; /* prevents flex from expanding too much */
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .char-counter{
@@ -356,6 +362,14 @@ body.dark #chat::-webkit-scrollbar-thumb {background-color: #2563eb;border: 2px 
   }
   .menu-btn { display:block !important; }
   .scroll-bottom { right: 20px; }
+  .app {
+    flex-direction: column;
+    width: 100%;
+  }
+  #chat {
+    padding: 12px;
+    max-width: 100%;
+}
 }
 </style>
 </head>
@@ -998,6 +1012,7 @@ updateHeaderTitle();
 </script>
 </body>
 </html>
+
 
 
 
