@@ -827,7 +827,7 @@ searchBox.addEventListener("input",renderHistory);
 
 /* ===== KEYBOARD SHORTCUTS ===== */
 document.addEventListener("keydown",(e)=>{
-  if(e.ctrlKey&&e.key==="n"){
+  if(e.ctrlKey&&e.key==="b"){
     e.preventDefault();
     newChat();
   }
@@ -940,15 +940,30 @@ async function streamBotInChunks(fullText, chunkSize = 500) {
   chat.appendChild(d);
 
   let renderedText = "";
+  const session = getCurrentSession();
+
+  // Check if the last message is already a bot message
+  let botMsgIndex = session.messages.length && session.messages[session.messages.length-1].role === "bot"
+                     ? session.messages.length-1
+                     : null;
+
   for (let i = 0; i < fullText.length; i += chunkSize) {
     const chunk = fullText.slice(i, i + chunkSize);
     renderedText += chunk;
+
     d.innerHTML = marked.parse(preprocess(renderedText));
     chat.scrollTop = chat.scrollHeight;
+
+    // Save/update live
+    if (botMsgIndex !== null) {
+      session.messages[botMsgIndex].content = renderedText;
+    } else {
+      saveMessage("bot", renderedText);
+      botMsgIndex = session.messages.length - 1;
+    }
+
     await new Promise(r => setTimeout(r, 15));
   }
-
-  saveMessage("bot", fullText);
 }
 
 // SEND function for DeepSeek
@@ -1000,6 +1015,7 @@ updateHeaderTitle();
 </script>
 </body>
 </html>
+
 
 
 
