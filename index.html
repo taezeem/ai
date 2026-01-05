@@ -323,9 +323,20 @@ body.dark #chat::-webkit-scrollbar-thumb {background-color: #2563eb;border: 2px 
 
 /* ===== MOBILE ===== */
 @media(max-width:768px){
-  .sidebar{position:absolute;z-index:10;height:100%;}
-  .menu-btn{display:block !important;}
-  .scroll-bottom{right:20px;}
+  .sidebar {
+    position: absolute;
+    z-index: 20;       /* higher than other content */
+    height: 100%;
+    top: 0;
+    left: 0;
+    transform: translateX(-100%); /* hidden by default */
+    transition: transform 0.3s ease;
+  }
+  .sidebar.show {      /* class to toggle */
+    transform: translateX(0);
+  }
+  .menu-btn { display:block !important; }
+  .scroll-bottom { right: 20px; }
 }
 
 </style>
@@ -689,9 +700,8 @@ function clearChat(){
 }
 
 function toggleSidebar(){
-  sidebar.classList.toggle("hidden");
+  sidebar.classList.toggle("show"); // use show instead of hidden
 }
-
 /* ===== EXPORT/IMPORT ===== */
 function exportChat(){
   const session=getCurrentSession();
@@ -939,3 +949,4 @@ updateHeaderTitle();
 
 </body>
 </html>
+
