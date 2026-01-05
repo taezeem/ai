@@ -2,244 +2,133 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>HackoAI • Chat Interface</title>
-<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
-<link rel="manifest" href="/site.webmanifest">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Smooch+Sans:wght@100..900&display=swap" rel="stylesheet">
+<title>HackoAI • Neural Interface</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<!-- Markdown + Syntax Highlight -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Smooch+Sans:wght@300..800&display=swap" rel="stylesheet">
+
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github-dark.min.css">
 <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/highlight.min.js"></script>
 
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-
-/* ====== THEME ====== */
 :root{
-  --bg:#f4f4f5; --panel:#fff; --chat:#f9fafb;
-  --border:#e5e7eb; --user:#2563eb; --bot:#e5e7eb;
-  --text:#111827; --muted:#6b7280;
-  --link:#2563eb;
+  --bg:#020617;--panel:#0f172a;--chat:#1e293b;
+  --border:#1f2937;--user:#2563eb;--bot:#020617;
+  --text:#e5e7eb;--muted:#94a3b8;
 }
-pre::-webkit-scrollbar {
-  height: 6px;            /* horizontal scrollbar height */
-}
-
-pre::-webkit-scrollbar-track {
-  background: var(--chat);
-  border-radius: 3px;
-}
-
-pre::-webkit-scrollbar-thumb {
-  background: #2563eb;     /* nice blue like your theme */
-  border-radius: 3px;
-}
-  
-button.toggle:hover {
-  background: rgba(239,68,68,.15);
-  border-color: #ef4444;
-}
-  
-body.dark{
-  --bg:#020617;      /* Page background */
-  --panel:#0f172a;   /* Chat box background */
-  --chat:#1e293b;    /* Chat message area background */
-  --border:#1f2937;
-  --user:#2563eb;
-  --bot:#0f172a;
-  --text:#e5e7eb;
-  --muted:#94a3b8;
-  --link:#22c55e;    /* GREEN links in dark mode */
-}
-
 body{
-  font-family:system-ui,sans-serif;
+  font-family:system-ui;
   background:var(--bg);
-  display:flex;justify-content:center;align-items:center;
-  height:100vh;color:var(--text);
+  height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  color:var(--text);
 }
-
 .app{
-  width:100%;max-width:650px;height:90vh;
-  background:var(--panel);border-radius:14px;
+  width:100%;max-width:700px;height:92vh;
+  background:var(--panel);
+  border-radius:16px;
   display:flex;flex-direction:column;
-  box-shadow:0 20px 40px rgba(0,0,0,.3);
+  box-shadow:0 30px 60px rgba(0,0,0,.6);
   overflow:hidden;
 }
-
 header{
   padding:14px 16px;
   border-bottom:1px solid var(--border);
   display:flex;justify-content:space-between;align-items:center;
   font-weight:600;
 }
-
 .controls{display:flex;gap:8px}
-select,button.toggle{
+select,button{
   background:transparent;border:1px solid var(--border);
-  color:var(--text);padding:6px 10px;border-radius:8px;
-  cursor:pointer;
+  color:var(--text);padding:6px 10px;
+  border-radius:8px;cursor:pointer;
 }
-
-/* ===== CHAT ===== */
 #chat{
   flex:1;padding:16px;overflow-y:auto;
-  display:flex;flex-direction:column;gap:16px;
+  display:flex;flex-direction:column;gap:14px;
   background:var(--chat);
 }
-
 .msg{
-  max-width:85%;padding:12px 14px;
-  border-radius:12px;line-height:1.5;
-  opacity:0;animation:fadeIn .25s forwards;
-  position:relative;
+  max-width:85%;
+  padding:12px 14px;
+  border-radius:12px;
+  line-height:1.5;
+  animation:fade .2s forwards;
   word-wrap:break-word;
 }
-
 .user{align-self:flex-end;background:var(--user);color:#fff}
-.bot{align-self:flex-start;background:var(--bot);color:var(--text)}
-
-.msg a{
-  color: var(--link);
-  text-decoration: underline;
-}
-.msg a:hover{
-  color: #4ade80;
-}
-
-.timestamp{
-  font-size:10px;color:var(--muted);margin-top:6px;
-}
-
-/* ===== CODE BLOCKS ===== */
+.bot{align-self:flex-start;background:var(--bot)}
+.timestamp{font-size:10px;color:var(--muted);margin-top:4px}
 pre{
-  position:relative;
-  background:#020617;
-  border-radius:10px;
-  padding:12px;
-  margin-top:8px;
-  overflow-x:auto;
+  background:#020617;padding:12px;border-radius:10px;
+  margin-top:8px;position:relative;overflow-x:auto;
 }
-
-pre code{font-size:13px}
-
 .copy-btn{
-  position:absolute;
-  top:6px;right:6px;
-  background:#2563eb;border:none;color:#fff;
-  font-size:11px;padding:4px 8px;
-  border-radius:6px;cursor:pointer;
+  position:absolute;top:6px;right:6px;
+  font-size:11px;background:#2563eb;color:#fff;
+  border:none;border-radius:6px;padding:4px 8px;
 }
-
-/* ===== FOOTER ===== */
 footer{
   display:flex;gap:8px;padding:12px;
   border-top:1px solid var(--border);
-  background:var(--panel);
 }
-
-input{
-  flex:1;padding:12px;border-radius:8px;
+textarea{
+  flex:1;resize:none;max-height:120px;
+  padding:12px;border-radius:8px;
   border:1px solid var(--border);
   background:transparent;color:var(--text);
-  outline:none;
 }
-
-button.send{
-  padding:0 18px;border-radius:8px;
-  border:none;background:#2563eb;
-  color:#fff;font-weight:600;cursor:pointer;
+.send{
+  background:#2563eb;border:none;color:#fff;
+  padding:0 18px;border-radius:8px;font-weight:600;
 }
-
-/* ===== LOADER ===== */
+.typing{
+  font-size:12px;color:var(--muted);
+  padding-left:6px;
+}
+@keyframes fade{from{opacity:0}to{opacity:1}}
 .spinner{
-  width:18px;height:18px;
-  border:3px solid var(--border);
-  border-top:3px solid #2563eb;
-  border-radius:50%;
+  width:16px;height:16px;border:3px solid var(--border);
+  border-top:3px solid #2563eb;border-radius:50%;
   animation:spin 1s linear infinite;
 }
-
 @keyframes spin{to{transform:rotate(360deg)}}
-@keyframes fadeIn{to{opacity:1;}}
-
-  /* ===== CUSTOM SCROLLBAR ===== */
-#chat::-webkit-scrollbar {
-  width: 8px;
-}
-#chat::-webkit-scrollbar-track {
-  background: var(--panel);
-  border-radius: 8px;
-}
-#chat::-webkit-scrollbar-thumb {
-  background-color: var(--user);
-  border-radius: 8px;
-  border: 2px solid var(--panel);
-}
-body.dark #chat::-webkit-scrollbar-thumb {
-  background-color: #2563eb; /* nice blue for dark mode */
-  border: 2px solid #0f172a;
-}
-
-/* ===== BULLET POINTS INSIDE CHAT BOX ===== */
-.msg ul, .msg ol {
-  padding-left: 20px; /* space for bullets */
-  margin: 8px 0;      /* spacing between lists and text */
-}
-.msg li {
-  margin-bottom: 4px; /* spacing between items */
-}
-
 </style>
 </head>
 
-<body class="dark">
-
+<body>
 <div class="app">
-  <header>
-    HackoAI
-    <div class="controls">
-      <select id="mode">
-        <option value="chat">Chat</option>
-      </select>
-      <button class="toggle" onclick="clearChat()">🗑️</button>
-      <button class="toggle" onclick="toggleTheme()">🌗</button>
-    </div>
-  </header>
+<header>
+  HackoAI
+  <div class="controls">
+    <select id="model">
+      <option value="auto">Auto</option>
+      <option value="fast">Fast</option>
+      <option value="reasoning">Reasoning</option>
+    </select>
+    <button onclick="clearChat()">🗑️</button>
+  </div>
+</header>
 
-  <div id="chat"></div>
+<div id="chat"></div>
 
-  <footer>
-    <input id="input" placeholder="Type a message…" />
-    <button class="send" onclick="send()">Send</button>
-  </footer>
+<footer>
+  <textarea id="input" rows="1" placeholder="Drop a thought…"></textarea>
+  <button class="send" onclick="send()">Send</button>
+</footer>
 </div>
 
 <script>
-
-function clearChat(){
-  if(!confirm("Clear entire chat? This cannot be undone 💀")) return;
-
-  localStorage.removeItem(KEY);
-  history = [];
-  chat.innerHTML = "";
-
-  render("bot","**Chat cleared. Fresh slate 😎✨**", false);
-}
-
-  
 const chat=document.getElementById("chat");
 const input=document.getElementById("input");
-const mode=document.getElementById("mode");
-
-/* ===== MEMORY ===== */
+const model=document.getElementById("model");
 const KEY="hackoai_chat";
+
 let history=JSON.parse(localStorage.getItem(KEY)||"[]");
 history.forEach(m=>render(m.role,m.content,false));
 
@@ -248,120 +137,85 @@ function save(role,content){
   localStorage.setItem(KEY,JSON.stringify(history));
 }
 
-/* ===== UTILS ===== */
 function time(){
   const d=new Date();
-  return d.getHours().toString().padStart(2,'0')+":"+
-         d.getMinutes().toString().padStart(2,'0');
+  return d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
 }
 
-/* ===== RENDER ===== */
-  function preprocess(text){
-  return text
-    // remove Markdown strikethrough
-    .replace(/~~(.*?)~~/g, "$1")
-    // remove HTML strikethrough tags like <s>, <del>, <strike>
-    .replace(/<\/?(s|del|strike)>/gi, "");
+function sanitize(t){
+  return t.replace(/<script.*?>.*?<\/script>/gi,"");
 }
-  
+
 function render(role,content,saveIt=true){
   const d=document.createElement("div");
   d.className="msg "+role;
-  d.innerHTML = marked.parse(preprocess(content));
-  d.querySelectorAll("pre code").forEach(block=>{
-    hljs.highlightElement(block);
-
+  d.innerHTML=marked.parse(sanitize(content));
+  d.querySelectorAll("pre code").forEach(b=>{
+    hljs.highlightElement(b);
     const btn=document.createElement("button");
     btn.className="copy-btn";
     btn.textContent="COPY";
     btn.onclick=()=>{
-      navigator.clipboard.writeText(block.textContent);
+      navigator.clipboard.writeText(b.textContent);
       btn.textContent="COPIED";
       setTimeout(()=>btn.textContent="COPY",1000);
     };
-    block.parentElement.appendChild(btn);
+    b.parentElement.appendChild(btn);
   });
-
   const t=document.createElement("div");
-  t.className="timestamp";
-  t.textContent=time();
+  t.className="timestamp";t.textContent=time();
   d.appendChild(t);
-
   chat.appendChild(d);
   chat.scrollTop=chat.scrollHeight;
-
   if(saveIt) save(role,content);
-  return d;
 }
 
-/* ===== TYPEWRITER ===== */
-function streamBot(text){
-  const d=document.createElement("div");
-  d.className="msg bot";
-  chat.appendChild(d);
-
-  let i=0;
-  const interval=setInterval(()=>{
-    d.innerHTML = marked.parse(preprocess(text.slice(0,i++)));
-    chat.scrollTop=chat.scrollHeight;
-    if(i>text.length){
-      clearInterval(interval);
-      render("bot",text);
-      d.remove();
-    }
-  },15);
+function clearChat(){
+  if(!confirm("Nuke the convo? 💀"))return;
+  history=[];localStorage.removeItem(KEY);
+  chat.innerHTML="";
+  render("bot","Fresh boot. Neural stack online ⚡");
 }
 
-/* ===== SEND ===== */
-async function send() {
-  let prompt = input.value.trim();
-  if (!prompt) return;
-  input.value = "";
+input.addEventListener("input",()=>{
+  input.style.height="auto";
+  input.style.height=input.scrollHeight+"px";
+});
 
-  render("user", prompt);
+async function send(){
+  const text=input.value.trim();
+  if(!text)return;
+  input.value="";input.style.height="auto";
+  render("user",text);
 
-  const loading = render("bot", "<div class='spinner'></div>", false);
+  const typing=document.createElement("div");
+  typing.className="typing";
+  typing.innerHTML="<div class='spinner'></div> AI thinking…";
+  chat.appendChild(typing);
 
-  try {
-    const res = await fetch("/.netlify/functions/hackoAI", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text: prompt })
+  try{
+    const res=await fetch("/.netlify/functions/hackoAI",{
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
+      body:JSON.stringify({ text, model:model.value })
     });
-
-    const data = await res.json();
-
-    loading.remove();
-
-    const answer = data?.choices?.[0]?.message?.content;
-
-    if (!answer) {
-      render("bot", "💀 Empty response. Free-tier moment.");
-      return;
-    }
-
-    streamBot(answer);
-
-  } catch (err) {
-    loading.remove();
-    console.error(err);
-    render("bot", "**Network error. Server folded 💀**");
+    const data=await res.json();
+    typing.remove();
+    const answer=data?.choices?.[0]?.message?.content;
+    if(!answer) throw 0;
+    render("bot",answer);
+  }catch{
+    typing.remove();
+    render("bot","Server folded 💀 Retry?");
   }
 }
 
-function toggleTheme() {
-  document.body.classList.toggle("dark");
-}
-
-input.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") send();
+input.addEventListener("keydown",e=>{
+  if(e.key==="Enter"&&!e.shiftKey){
+    e.preventDefault();send();
+  }
 });
 </script>
-
 </body>
 </html>
-
-
-
-
 
