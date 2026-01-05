@@ -241,6 +241,15 @@ function toggleTheme(){
 if(!store.active) newChat();
 else loadChat(store.active);
 renderSidebar();
+/* ================= SEND ================= */
+  input.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault(); // stop newline
+    send();
+  }
+});
+
 </script>
 </body>
 </html>
+
