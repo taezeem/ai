@@ -113,6 +113,23 @@ textarea{
   color:var(--text);
   overflow:hidden;
 }
+  button {
+  transition: background .15s ease, transform .1s ease, opacity .1s ease;
+}
+
+button:hover {
+  opacity: .9;
+}
+
+button:active {
+  transform: scale(0.97);
+}
+
+button:focus-visible {
+  outline: 2px solid var(--user);
+  outline-offset: 2px;
+}
+
 </style>
 </head>
 
@@ -183,22 +200,38 @@ function save(role,content){
 
 /* ================= SEND ================= */
 async function send(){
-  const text=input.value.trim();
+  const text = input.value.trim();
   if(!text) return;
-  input.value="";
-  render("user",text);
+  input.value = "";
 
-  document.getElementById("loaderBar").hidden=false;
-  const loading=render("bot","",false);
-  loading.innerHTML='<div class="spinner"></div>';
+  render("user", text);
 
-  setTimeout(()=>{
+  const loaderBar = document.getElementById("loaderBar");
+  loaderBar.hidden = false;
+
+  const loading = render("bot", "", false);
+  loading.innerHTML = '<div class="spinner"></div>';
+
+  try {
+    const res = await fetch("/.netlify/functions/hackoAI", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text })
+    });
+
+    const data = await res.json();
     loading.remove();
-    render("bot","OG V3 online. UI survived. Brain upgraded 😎");
-    document.getElementById("loaderBar").hidden=true;
-  },800);
-}
 
+    // ✅ OG BACKEND COMPAT
+    render("bot", data.reply || "💀 Brain returned nothing");
+
+  } catch (err) {
+    loading.remove();
+    render("bot", "⚠️ Brain crashed. Backend dead?");
+  }
+
+  loaderBar.hidden = true;
+}
 /* ================= SESSIONS ================= */
 function newChat(){
   const id="chat_"+Date.now();
@@ -252,4 +285,5 @@ renderSidebar();
 </script>
 </body>
 </html>
+
 
