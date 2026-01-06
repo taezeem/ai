@@ -326,18 +326,18 @@ body.dark #chat::-webkit-scrollbar-thumb {background-color: #2563eb;border: 2px 
 
 .hidden{display:none;}
 
-  .menu-close-btn {
-  display: none; /* hidden on desktop */
+  .menu-close-btn{
   position: absolute;
-  top: 10px;
-  right: 10px;
+  top: 12px;
+  right: 12px;
   background: #2563eb;
   color: #fff;
   border: none;
   padding: 6px 10px;
-  border-radius: 6px;
+  border-radius: 8px;
+  font-size: 14px;
   cursor: pointer;
-  z-index: 25;
+  z-index: 30;
 }
 
 @media(max-width:768px){
@@ -349,7 +349,7 @@ body.dark #chat::-webkit-scrollbar-thumb {background-color: #2563eb;border: 2px 
 /* ===== MOBILE ===== */
 @media(max-width:768px){
   .sidebar {
-    position: absolute;
+    position: relative; /* 🔥 THIS FIXES IT */
     z-index: 20;       /* higher than other content */
     height: 100%;
     top: 0;
@@ -1058,6 +1058,7 @@ updateHeaderTitle();
 </script>
 </body>
 </html>
+
 
 
 
