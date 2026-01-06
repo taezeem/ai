@@ -1016,53 +1016,78 @@ async function send() {
   input.value = "";
   charCounter.textContent = "0 chars";
 
-  // IMAGE MODE
-  if (prompt.startsWith("/image ")) {
-    const imagePrompt = prompt.slice(7).trim();
-    render("user", prompt);
-    const loading = render("bot", "<div class='spinner'></div>", false);
+  // Decide if it's an image or normal chat
+  const isImage = prompt.startsWith("/img "); // use /img command to trigger image
+  if (isImage) prompt = prompt.slice(5); // remove /img from prompt
 
-    try {
-      const res = await fetch("https://t2i.mcpcore.xyz/api/free/generate", {
+  render("user", prompt);
+
+  const loading = render("bot", "<div class='spinner'></div>", false);
+
+  try {
+    if (isImage) {
+      // ====== IMAGE GENERATION via SubNP ======
+      const response = await fetch("https://t2i.mcpcore.xyz/api/free/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: imagePrompt, model: "turbo" })
+        body: JSON.stringify({ prompt: prompt, model: "turbo" })
+      });
+
+      const reader = response.body
+        .pipeThrough(new TextDecoderStream())
+        .getReader();
+
+      let buffer = "";
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += value;
+
+        const lines = buffer.split("\n");
+        buffer = lines.pop(); // keep partial line
+
+        for (let line of lines) {
+          if (!line.startsWith("data: ")) continue;
+          const data = JSON.parse(line.slice(6));
+
+          switch (data.status) {
+            case "processing":
+              console.log("Progress:", data.message);
+              break;
+            case "complete":
+              loading.remove();
+              render("bot", `<img src="${data.imageUrl}" alt="AI Image" />`);
+              break;
+            case "error":
+              loading.remove();
+              render("bot", `**Error:** ${data.message}`);
+              break;
+          }
+        }
+      }
+
+    } else {
+      // ====== TEXT CHAT via DeepSeek ======
+      const res = await fetch("/.netlify/functions/hackoAI", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: prompt })
       });
 
       const data = await res.json();
       loading.remove();
 
-      if (data.imageUrl) render("bot", `![AI Image](${data.imageUrl})`);
-      else render("bot", "**Failed to generate image 💀**");
-    } catch (err) {
-      loading.remove();
-      console.error(err);
-      render("bot", "**Network error. SubNP API unreachable 💀**");
+      const answer = data.choices?.[0]?.message?.content || "💀 Empty response from DeepSeek";
+      await streamBotInChunks(answer);
     }
-    return;
-  }
 
-  // NORMAL TEXT MODE
-  render("user", prompt);
-  const loading = render("bot", "<div class='spinner'></div>", false);
-
-  try {
-    const res = await fetch("https://hackoai.netlify.com/.netlify/functions/hackoAI", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text: prompt })
-    });
-
-    const data = await res.json();
-    loading.remove();
-    const answer = data.choices?.[0]?.message?.content || "💀 Empty response from DeepSeek";
-    await streamBotInChunks(answer);
   } catch (err) {
     loading.remove();
     console.error(err);
-    render("bot", "**Network error. Server folded 💀**");
+    render("bot", "**Network error 💀**");
   }
 }
+
 
 
 
@@ -1082,5 +1107,6 @@ updateHeaderTitle();
 </script>
 </body>
 </html>
+
 
 
