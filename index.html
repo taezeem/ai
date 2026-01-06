@@ -349,13 +349,14 @@ body.dark #chat::-webkit-scrollbar-thumb {background-color: #2563eb;border: 2px 
 /* ===== MOBILE ===== */
 @media(max-width:768px){
   .sidebar {
-    position: relative; /* 🔥 THIS FIXES IT */
     z-index: 20;       /* higher than other content */
     height: 100%;
     top: 0;
     left: 0;
     transform: translateX(-100%); /* hidden by default */
     transition: transform 0.3s ease;
+    
+    position: relative; /* 🔥 THIS FIXES IT */
   }
   .sidebar.show {      /* class to toggle */
     transform: translateX(0);
@@ -399,10 +400,10 @@ body.dark #chat::-webkit-scrollbar-thumb {background-color: #2563eb;border: 2px 
         <span id="headerTitle" ondblclick="editTitle()">HackoAI</span>
       </div>
       <div class="controls">
-        <button class="toggle" onclick="exportChat()">💾 Export</button>
-        <button class="toggle" onclick="copyAll()">📋 Copy</button>
-        <button class="toggle" onclick="clearChat()">🗑️ Delete</button>
-        <button class="toggle" onclick="toggleTheme()">🌗 Switch</button>
+        <button class="toggle" onclick="exportChat()">💾</button>
+        <button class="toggle" onclick="copyAll()">📋</button>
+        <button class="toggle" onclick="clearChat()">🗑️</button>
+        <button class="toggle" onclick="toggleTheme()">🌗</button>
       </div>
     </header>
 
@@ -1107,6 +1108,7 @@ updateHeaderTitle();
 </script>
 </body>
 </html>
+
 
 
 
