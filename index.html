@@ -370,12 +370,69 @@ body.dark #chat::-webkit-scrollbar-thumb {background-color: #2563eb;border: 2px 
     padding: 12px;
     max-width: 100%;
 }
+  .lock-screen{
+  position: fixed;
+  inset: 0;
+  background: rgba(2,6,23,.95);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
 }
+
+.lock-card{
+  background: #0f172a;
+  padding: 30px;
+  border-radius: 14px;
+  width: 90%;
+  max-width: 320px;
+  text-align: center;
+  box-shadow: 0 20px 40px rgba(0,0,0,.6);
+}
+
+.lock-card h2{
+  margin-bottom: 12px;
+}
+
+.lock-card input{
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #1f2937;
+  background: #020617;
+  color: #fff;
+  margin-bottom: 10px;
+}
+
+.lock-card button{
+  width: 100%;
+  padding: 10px;
+  background: #2563eb;
+  border: none;
+  color: white;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+#lockError{
+  color: #ef4444;
+  font-size: 12px;
+  margin-top: 6px;
+}
+
 </style>
 </head>
 
 <body class="dark">
-
+<div id="lockScreen" class="lock-screen hidden">
+  <div class="lock-card">
+    <h2>🔐 HackoAI Locked</h2>
+    <input id="lockInput" type="password" placeholder="Enter passphrase" />
+    <button onclick="unlock()">Unlock</button>
+    <p id="lockError"></p>
+  </div>
+</div>
 <div class="container">
   <!-- SIDEBAR -->
   <div class="sidebar" id="sidebar">
@@ -1055,9 +1112,57 @@ getCurrentSession().messages.forEach(m=>render(m.role,m.content,false));
 renderHistory();
 updateHeaderTitle();
 
+  const LOCK_KEY = "hackoai_lock_hash";
+
+async function hash(text){
+  const enc = new TextEncoder().encode(text);
+  const buf = await crypto.subtle.digest("SHA-256", enc);
+  return Array.from(new Uint8Array(buf))
+    .map(b=>b.toString(16).padStart(2,"0"))
+    .join("");
+}
+
+async function setPassphrase(pass){
+  const h = await hash(pass);
+  localStorage.setItem(LOCK_KEY, h);
+}
+
+async function unlock(){
+  const input = document.getElementById("lockInput");
+  const err = document.getElementById("lockError");
+  const saved = localStorage.getItem(LOCK_KEY);
+
+  if(!saved){
+    await setPassphrase(input.value);
+    hideLock();
+    return;
+  }
+
+  const h = await hash(input.value);
+  if(h === saved){
+    hideLock();
+  }else{
+    err.textContent = "Wrong passphrase 💀";
+    input.value = "";
+  }
+}
+
+function hideLock(){
+  document.getElementById("lockScreen").classList.add("hidden");
+}
+
+function checkLock(){
+  if(localStorage.getItem(LOCK_KEY)){
+    document.getElementById("lockScreen").classList.remove("hidden");
+  }
+}
+
+  checkLock();
+
 </script>
 </body>
 </html>
+
 
 
 
