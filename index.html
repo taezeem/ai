@@ -349,13 +349,15 @@ body.dark #chat::-webkit-scrollbar-thumb {background-color: #2563eb;border: 2px 
 /* ===== MOBILE ===== */
 @media(max-width:768px){
   .sidebar {
-    position: relative; /* 🔥 THIS FIXES IT */
+    
     z-index: 20;       /* higher than other content */
     height: 100%;
     top: 0;
     left: 0;
     transform: translateX(-100%); /* hidden by default */
     transition: transform 0.3s ease;
+    
+    position: relative; /* 🔥 THIS FIXES IT */
   }
   .sidebar.show {      /* class to toggle */
     transform: translateX(0);
@@ -1166,6 +1168,7 @@ function checkLock(){
 </script>
 </body>
 </html>
+
 
 
 
