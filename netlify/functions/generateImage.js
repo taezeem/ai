@@ -4,7 +4,7 @@ export async function handler(event) {
 
   const subnpRes = await fetch("https://subnp.com/api/free/generate", {
     method: "POST",
-    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${SUBNP_KEY}` },
+    headers:{ "Content-Type": "application/json" },
     body: JSON.stringify({ prompt, model: "turbo" })
   });
 
