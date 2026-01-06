@@ -1,20 +1,13 @@
-// netlify/functions/generateImage.js
 export async function handler(event) {
   const { prompt } = JSON.parse(event.body);
-  try {
-    const res = await fetch("https://t2i.mcpcore.xyz/api/free/generate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ prompt, model: "turbo" })
-    });
-    return {
-      statusCode: 200,
-      body: await res.text() // stream as text
-    };
-  } catch (err) {
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: err.message })
-    };
-  }
+  const SUBNP_KEY = process.env.SUBNP_KEY;
+
+  const subnpRes = await fetch("https://subnp.com/api/free/generate", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${SUBNP_KEY}` },
+    body: JSON.stringify({ prompt, model: "turbo" })
+  });
+
+  const data = await subnpRes.json();
+  return { statusCode: 200, body: JSON.stringify(data) };
 }
