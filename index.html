@@ -1135,11 +1135,20 @@ function unlock(){
   }
 }
 
+// Set a default passphrase if not already set
+if (!localStorage.getItem("hackoai_lock_enabled")) {
+  localStorage.setItem("hackoai_lock_enabled", "true");
+}
+if (!localStorage.getItem("hackoai_passphrase")) {
+  localStorage.setItem("hackoai_passphrase", "mypassword123"); // change this
+}
+  
   initLock();
 
 </script>
 </body>
 </html>
+
 
 
 
