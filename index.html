@@ -913,7 +913,15 @@ function preprocess(text){
 function render(role,content,saveIt=true){
   const d=document.createElement("div");
   d.className="msg "+role;
+  if(content.startsWith("data:image/")) {
+  const imgEl = document.createElement("img");
+  imgEl.src = content;
+  imgEl.className = "ai-img";
+  d.appendChild(imgEl);
+} else {
   d.innerHTML = marked.parse(preprocess(content));
+}
+
   
   // Add message actions for user messages
   if(role==="user"){
@@ -1042,14 +1050,26 @@ async function send() {
           const div = document.createElement("div");
           div.className = "msg bot";
           img.classList.add("ai-img");
-          div.appendChild(img);
+
+// wait until image fully loads
+img.onload = () => {
+  const canvas = document.createElement("canvas");
+  canvas.width = img.naturalWidth;
+  canvas.height = img.naturalHeight;
+  const ctx = canvas.getContext("2d");
+  ctx.drawImage(img, 0, 0);
+  const base64 = canvas.toDataURL();
+  saveMessage("bot", base64);
+};
+
+div.appendChild(img);
           const t = document.createElement("div");
           t.className = "timestamp";
           t.textContent = time();
           div.appendChild(t);
           chat.appendChild(div);
           chat.scrollTop = chat.scrollHeight;
-          saveMessage("bot", "[DALL-E 3 Image]");
+          
         })
         .catch(err => {
           loading.remove();
@@ -1093,6 +1113,7 @@ updateHeaderTitle();
 </script>
 </body>
 </html>
+
 
 
 
