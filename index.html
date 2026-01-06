@@ -425,7 +425,7 @@ body.dark #chat::-webkit-scrollbar-thumb {background-color: #2563eb;border: 2px 
 </head>
 
 <body class="dark">
-<div id="lockScreen" class="lock-screen hidden">
+<div id="lockScreen" class="lock-screen">
   <div class="lock-card">
     <h2>🔐 HackoAI Locked</h2>
     <input id="lockInput" type="password" placeholder="Enter passphrase" />
@@ -1152,16 +1152,21 @@ function hideLock(){
 }
 
 function checkLock(){
-  if(localStorage.getItem(LOCK_KEY)){
-    document.getElementById("lockScreen").classList.remove("hidden");
+  const lock = document.getElementById("lockScreen");
+  const saved = localStorage.getItem(LOCK_KEY);
+
+  if(saved){
+    lock.classList.remove("hidden"); // locked
+  }else{
+    lock.classList.remove("hidden"); // first-time setup
   }
 }
-
   checkLock();
 
 </script>
 </body>
 </html>
+
 
 
 
