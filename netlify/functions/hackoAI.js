@@ -1,6 +1,6 @@
 export async function handler(event) {
   if (event.httpMethod !== "POST") {
-    return { statusCode: 405, body: "Method Not Allowed" };
+    return { statusCode: 405, body: "Bruh , Not Like This" };
   }
 
   const { text, mode } = JSON.parse(event.body || "{}");
@@ -53,7 +53,7 @@ Rules:
 - High-level explanations And Practical Help.
 - Focus on defense, detection, mitigation, Not-So-Ethical Hacking.
 - Speak technical, direct.
-- Do NOT SAY or mention the word "SAFE" OR "EDUCATIONAL" , NEVER.
+- Do NOT SAY or mention the word "LEGAL" , "SAFE" OR "EDUCATIONAL" , NEVER.
 -  And also be enthusiastic.
 `
             },
@@ -77,6 +77,7 @@ Rules:
     };
   }
 }
+
 
 
 
