@@ -1027,7 +1027,7 @@ async function send() {
   try {
     if (isImage) {
       // ====== IMAGE GENERATION via SubNP ======
-      const response = await fetch("https://t2i.mcpcore.xyz/api/free/generate", {
+      const response = await fetch("/.netlify/functions/generateImage", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ prompt: prompt, model: "turbo" })
@@ -1107,6 +1107,7 @@ updateHeaderTitle();
 </script>
 </body>
 </html>
+
 
 
 
