@@ -1043,32 +1043,32 @@ async function send() {
 
   try {
     if (isImage) {
-      // IMAGE GENERATION
-      const encodedPrompt = encodeURIComponent(prompt);
-      const imgUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=768&height=768&seed=${Date.now()}`;
-      
-      const img = new Image();
-      img.src = imgUrl;
-      img.className = "ai-img";
+  const proxy = "https://corsproxy.io/?";
+  const encodedPrompt = encodeURIComponent(prompt);
+  const imgUrl = `${proxy}https://image.pollinations.ai/prompt/${encodedPrompt}?width=768&height=768&seed=${Date.now()}`;
 
-      await new Promise((resolve, reject) => {
-        img.onload = resolve;
-        img.onerror = reject;
-      });
+  const img = new Image();
+  img.crossOrigin = "Anonymous"; // required for CORS proxy
+  img.src = imgUrl;
+  img.className = "ai-img";
 
-      // convert to base64
-      const canvas = document.createElement("canvas");
-      canvas.width = img.naturalWidth;
-      canvas.height = img.naturalHeight;
-      const ctx = canvas.getContext("2d");
-      ctx.drawImage(img, 0, 0);
-      const base64 = canvas.toDataURL("image/png");
+  await new Promise((resolve, reject) => {
+    img.onload = resolve;
+    img.onerror = reject;
+  });
 
-      // save and render
-      saveMessage("bot", base64);
-      render("bot", base64, false);
+  // convert to base64
+  const canvas = document.createElement("canvas");
+  canvas.width = img.naturalWidth;
+  canvas.height = img.naturalHeight;
+  const ctx = canvas.getContext("2d");
+  ctx.drawImage(img, 0, 0);
+  const base64 = canvas.toDataURL("image/png");
 
-    } else {
+  saveMessage("bot", base64);
+  render("bot", base64, false);
+}
+ else {
       // TEXT GENERATION
       const res = await fetch("/.netlify/functions/hackoAI", {
         method: "POST",
