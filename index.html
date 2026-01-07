@@ -1042,58 +1042,41 @@ async function send() {
   const loading = render("bot", "<div class='spinner'></div>", false);
 
  try {
-  if (isImage) {
+    if (isImage) {
+      // Image generation
+      puter.ai.txt2img(prompt, { model: "google/imagen-4.0-preview" })
+        .then(img => {
+          loading.remove();
+          const div = document.createElement("div");
+          div.className = "msg bot";
+          img.classList.add("ai-img");
 
-    const DEV_MODE = true; // 👈 set false when going live
+// wait until image fully loads
+img.onload = () => {
+  const canvas = document.createElement("canvas");
+  canvas.width = img.naturalWidth;
+  canvas.height = img.naturalHeight;
+  const ctx = canvas.getContext("2d");
+  ctx.drawImage(img, 0, 0);
+  const base64 = canvas.toDataURL();
+  saveMessage("bot", base64);
+};
 
-    const gen = DEV_MODE
-      ? puter.ai.txt2img(prompt, true) // 🧪 test mode (FREE)
-      : puter.ai.txt2img(prompt, {
-          model: "google/imagen-4.0-fast",
-          quality: "fast"
+div.appendChild(img);
+          const t = document.createElement("div");
+          t.className = "timestamp";
+          t.textContent = time();
+          div.appendChild(t);
+          chat.appendChild(div);
+          chat.scrollTop = chat.scrollHeight;
+          
+        })
+        .catch(err => {
+          loading.remove();
+          console.error(err);
+          render("bot", "**Error generating image 💀**");
         });
-
-    gen.then(img => {
-      loading.remove();
-
-      const div = document.createElement("div");
-      div.className = "msg bot";
-      img.classList.add("ai-img");
-
-      // wait until image fully loads
-      img.onload = () => {
-        const canvas = document.createElement("canvas");
-        canvas.width = img.naturalWidth;
-        canvas.height = img.naturalHeight;
-
-        const ctx = canvas.getContext("2d");
-        ctx.drawImage(img, 0, 0);
-
-        const base64 = canvas.toDataURL("image/png");
-        saveMessage("bot", base64); // ✅ stored in localStorage
-      };
-
-      div.appendChild(img);
-
-      const t = document.createElement("div");
-      t.className = "timestamp";
-      t.textContent = time();
-      div.appendChild(t);
-
-      chat.appendChild(div);
-      chat.scrollTop = chat.scrollHeight;
-    })
-    .catch(err => {
-      loading.remove();
-      console.error(err);
-      render("bot", "**Error generating image 💀**");
-    });
-  }
-} catch (err) {
-  loading.remove();
-  console.error(err);
-  render("bot", "**Something exploded 💀**");
-} else {
+    } else {
       // Text via DeepSeek
       const res = await fetch("/.netlify/functions/hackoAI", {
         method: "POST",
@@ -1130,6 +1113,7 @@ updateHeaderTitle();
 </script>
 </body>
 </html>
+
 
 
 
