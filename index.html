@@ -910,7 +910,6 @@ function preprocess(text){
 }
 
 /* ===== RENDER ===== */
-
 function render(role,content,saveIt=true){
   const d=document.createElement("div");
   d.className="msg "+role;
@@ -922,6 +921,7 @@ function render(role,content,saveIt=true){
 } else {
   d.innerHTML = marked.parse(preprocess(content));
 }
+
   
   // Add message actions for user messages
   if(role==="user"){
@@ -1035,50 +1035,16 @@ async function send() {
   input.value = "";
   charCounter.textContent = "0 chars";
 
-  const isImage = prompt.startsWith("/img ");
-  const isVid = prompt.startsWith("/vid ");
+  const isImage = prompt.startsWith("/img "); 
   if (isImage) prompt = prompt.slice(5); 
-  if (isVid) prompt = prompt.slice(5); 
 
   render("user", prompt);
   const loading = render("bot", "<div class='spinner'></div>", false);
 
-  try {
-    if (isVid) {
-  // Video Generation with Seedance
-  const encodedPrompt = encodeURIComponent(prompt);
-  
-  // Lite model, change to "ByteDance/Seedance-1.0-pro" for better quality
-  const model = "ByteDance/Seedance-1.0-pro"; 
-  
-  // optional: set width/height for aspect ratio
-  const options = { width: 768, height: 768 }; 
-
-  puter.ai.txt2vid(prompt, { model, ...options })
-    .then(video => {
-      loading.remove();        // remove spinner
-      video.className = "ai-video"; // optional styling
-      video.controls = true;        // show play/pause controls
-      render("bot", "");             // empty bot msg container
-      const botMsg = chat.lastChild; // get last bot div
-      botMsg.appendChild(video);     // attach video
-      video.play();
-      
-      // Save video URL in session (optional)
-      saveMessage("bot", video.src || "Video generated");
-    })
-    .catch(err => {
-      console.error(err);
-      loading.remove();
-      render("bot", "**Error generating video 💀**");
-    });
-
-  return; // exit so it doesn't run text generation
-}
-      
+ try {
     if (isImage) {
       // Image generation
-      puter.ai.txt2img(prompt, { model: "ByteDance-Seed/Seedream-4.0", provider: "together-ai"})
+      puter.ai.txt2img(prompt, { model: "google/imagen-4.0-ultra", provider: "together-ai", disable_safety_checker: true })
         .then(img => {
           loading.remove();
           const div = document.createElement("div");
@@ -1110,9 +1076,8 @@ div.appendChild(img);
           console.error(err);
           render("bot", "**Error generating image 💀**");
         });
-    }
- else {
-      // TEXT GENERATION
+    } else {
+      // Text via DeepSeek
       const res = await fetch("/.netlify/functions/hackoAI", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -1120,21 +1085,17 @@ div.appendChild(img);
       });
 
       const data = await res.json();
-      const answer = data.choices?.[0]?.message?.content || "💀 Empty response from DeepSeek";
       loading.remove();
+
+      const answer = data.choices?.[0]?.message?.content || "💀 Empty response from DeepSeek";
       await streamBotInChunks(answer);
-      return;
     }
-
-    loading.remove();
-
   } catch (err) {
-    console.error(err);
     loading.remove();
-    render("bot", "**Error generating content 💀**");
+    console.error(err);
+    render("bot", "**Network error 💀**");
   }
 }
-
 
 function toggleTheme() {
   document.body.classList.toggle("dark");
@@ -1152,10 +1113,3 @@ updateHeaderTitle();
 </script>
 </body>
 </html>
-
-
-
-
-
-
-
