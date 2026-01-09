@@ -477,8 +477,11 @@ const headerTitle=document.getElementById("headerTitle");
 const SESSIONS_KEY = "hackoai_sessions";
 const CURRENT_KEY = "hackoai_current";
 
-let sessions = loadSessions();
-let currentId = localStorage.getItem(CURRENT_KEY) || null;
+// 👻 short-term memory
+let currentId =
+  sessionStorage.getItem(CURRENT_KEY) ||
+  localStorage.getItem(CURRENT_KEY) ||
+  null;
 
 function loadSessions() {
   try {
@@ -506,7 +509,11 @@ function saveSessions() {
   }
 
   localStorage.setItem(SESSIONS_KEY, JSON.stringify(sessions));
-  localStorage.setItem(CURRENT_KEY, currentId);
+
+// 🔥 store current chat in BOTH
+sessionStorage.setItem(CURRENT_KEY, currentId);
+localStorage.setItem(CURRENT_KEY, currentId);
+
   renderHistory();
   updateHeaderTitle();
 }
@@ -777,6 +784,7 @@ function editChatTitle(id,titleSpan,parentDiv){
 
 function newChat(){
   currentId=Date.now().toString();
+  sessionStorage.setItem(CURRENT_KEY, currentId); // 👈 HERE
   sessions[currentId]={
     id:currentId,
     title:"New Chat",
@@ -790,7 +798,8 @@ function newChat(){
 
 function loadChat(id){
   currentId=id;
-  localStorage.setItem(CURRENT_KEY,currentId);
+  sessionStorage.setItem(CURRENT_KEY, currentId);
+localStorage.setItem(CURRENT_KEY, currentId);
   chat.innerHTML="";
   getCurrentSession().messages.forEach(m=>render(m.role,m.content,false));
   renderHistory();
@@ -1168,6 +1177,7 @@ updateHeaderTitle();
 </script>
 </body>
 </html>
+
 
 
 
