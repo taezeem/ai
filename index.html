@@ -645,7 +645,11 @@ function renderHistory(){
   if(query){
     filtered=filtered.filter(s=>
       s.title.toLowerCase().includes(query)||
-      s.messages.some(m=>m.content.toLowerCase().includes(query))
+      s.messages.some(m =>
+  typeof m.content === "string" &&
+  m.content.toLowerCase().includes(query)
+)
+
     );
   }
   
@@ -1164,6 +1168,7 @@ updateHeaderTitle();
 </script>
 </body>
 </html>
+
 
 
 
