@@ -917,22 +917,27 @@ function preprocess(text){
 }
 
 /* ===== RENDER ===== */
-function render(role,content,saveIt=true){
-  const d=document.createElement("div");
-  d.className="msg "+role;
-  if (typeof content === "object" && content.type === "video") {
-  const video = document.createElement("video");
-  video.src = content.src;
-  video.controls = true;
-  video.autoplay = true;
-  video.loop = true;
-  video.style.maxWidth = "100%";
-  video.style.borderRadius = "12px";
-  d.appendChild(video);
-} else if (typeof content === "string") {
-  d.innerHTML = marked.parse(preprocess(content));
-}
-  
+function render(role, content, saveIt=true){
+  const d = document.createElement("div");
+  d.className = "msg " + role;
+
+  if (typeof content === "object" && content.type === "image") {
+    const img = document.createElement("img");
+    img.src = content.src;
+    img.className = "ai-img";
+    d.appendChild(img);
+  } else if (typeof content === "object" && content.type === "video") {
+    const video = document.createElement("video");
+    video.src = content.src;
+    video.controls = true;
+    video.autoplay = true;
+    video.loop = true;
+    video.style.maxWidth = "100%";
+    video.style.borderRadius = "12px";
+    d.appendChild(video);
+  } else if (typeof content === "string") {
+    d.innerHTML = marked.parse(preprocess(content));
+  }
   // Add message actions for user messages
   if(role==="user"){
     const actions=document.createElement("div");
@@ -1054,37 +1059,42 @@ async function send() {
   const loading = render("bot", "<div class='spinner'></div>", false);
 
   try {
-    /* ================= IMAGE ================= */
-    if (isImage) {
-      puter.ai.txt2img(prompt, {
-        model: "google/imagen-4.0-ultra", provider: "together-ai", disable_safety_checker: true })
-        .then(img => {
-        loading.remove();
+/* ================= IMAGE ================= */
+if (isImage) {
+  puter.ai.txt2img(prompt, {
+    model: "google/imagen-4.0-ultra",
+    provider: "together-ai",
+    disable_safety_checker: true
+  })
+  .then(img => {
+    loading.remove();
 
-        const div = document.createElement("div");
-        div.className = "msg bot";
-        img.classList.add("ai-img");
+    const div = document.createElement("div");
+    div.className = "msg bot";
 
-        img.onload = () => {
-          const canvas = document.createElement("canvas");
-          canvas.width = img.naturalWidth;
-          canvas.height = img.naturalHeight;
-          canvas.getContext("2d").drawImage(img, 0, 0);
-          saveMessage("bot", canvas.toDataURL());
-        };
+    img.classList.add("ai-img");
 
-        div.appendChild(img);
-        chat.appendChild(div);
-        chat.scrollTop = chat.scrollHeight;
-        })
-        .catch(err => {
-        loading.remove();
-          
-        console.error(err);
-        render("bot", "**Image gen failed 💀**");
-      });
-    }
+    // Make sure image is fully loaded before saving
+    img.onload = () => {
+      // Save the image as a base64 string for persistence
+      const canvas = document.createElement("canvas");
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      canvas.getContext("2d").drawImage(img, 0, 0);
+      const base64 = canvas.toDataURL();
+      saveMessage("bot", { type: "image", src: base64 });
+    };
 
+    div.appendChild(img);
+    chat.appendChild(div);
+    chat.scrollTop = chat.scrollHeight;
+  })
+  .catch(err => {
+    loading.remove();
+    console.error(err);
+    render("bot", "**Image gen failed 💀**");
+  });
+}
     /* ================= VIDEO ================= */
     else if (isVideo) {
       const video = await puter.ai.txt2vid(prompt, {
@@ -1153,4 +1163,5 @@ updateHeaderTitle();
 </script>
 </body>
 </html>
+
 
