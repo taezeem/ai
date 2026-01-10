@@ -1249,7 +1249,16 @@ saveMessage("bot", { type: "video", src: video.src });
         body: JSON.stringify({ text: prompt })
       });
 
-      const data = await res.json();
+      const text = await res.text();
+
+let data;
+try {
+  data = JSON.parse(text);
+} catch {
+  console.error("Non-JSON response:", text);
+  throw new Error("Server returned invalid response");
+}
+
       loading.remove();
 
       const answer =
@@ -1282,6 +1291,7 @@ updateHeaderTitle();
 </script>
 </body>
 </html>
+
 
 
 
