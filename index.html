@@ -380,9 +380,37 @@ body.dark #chat::-webkit-scrollbar-thumb {background-color: #2563eb;border: 2px 
   display: block;
 }
   select {
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 10px;
   font-size: 14px;
   font-weight: 600;
+  cursor: pointer;
+  outline: none;
+  appearance: none;        /* kill ugly native style */
+  -webkit-appearance: none;
+  -moz-appearance: none;
 }
+
+/* hover */
+select:hover {
+  border-color: var(--user);
+}
+
+/* focus */
+select:focus {
+  border-color: var(--user);
+  box-shadow: 0 0 0 2px rgba(37,99,235,0.25);
+}
+
+/* dropdown options */
+select option {
+  background: var(--panel);
+  color: var(--text);
+}
+
 
 
 </style>
@@ -1172,6 +1200,7 @@ updateHeaderTitle();
 </script>
 </body>
 </html>
+
 
 
 
