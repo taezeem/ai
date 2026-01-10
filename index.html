@@ -379,38 +379,65 @@ body.dark #chat::-webkit-scrollbar-thumb {background-color: #2563eb;border: 2px 
   margin-top: 8px;       /* spacing inside bubble */
   display: block;
 }
-  select {
-  background: var(--panel);
+  /* ===== THEMED SELECT ===== */
+.controls select {
+  background: linear-gradient(
+    180deg,
+    rgba(255,255,255,0.04),
+    rgba(0,0,0,0.05)
+  ), var(--panel);
+  
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.03);
   color: var(--text);
   border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 6px 10px;
-  font-size: 14px;
+  border-radius: 10px;
+  padding: 6px 36px 6px 12px;
+
+  font-size: 13px;
   font-weight: 600;
   cursor: pointer;
+
   outline: none;
-  appearance: none;        /* kill ugly native style */
+  appearance: none;
   -webkit-appearance: none;
   -moz-appearance: none;
+
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s,
+    background 0.2s;
 }
 
 /* hover */
-select:hover {
+.controls select:hover {
   border-color: var(--user);
 }
 
 /* focus */
-select:focus {
+.controls select:focus {
   border-color: var(--user);
-  box-shadow: 0 0 0 2px rgba(37,99,235,0.25);
+  box-shadow: 0 0 0 2px rgba(37,99,235,0.35);
 }
 
 /* dropdown options */
-select option {
+.controls select option {
   background: var(--panel);
   color: var(--text);
 }
+  .select-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
 
+.select-wrap::after {
+  content: "▾";
+  position: absolute;
+  right: 12px;
+  pointer-events: none;
+  font-size: 12px;
+  color: var(--muted);
+}
 
 
 </style>
@@ -446,11 +473,13 @@ select option {
         <button class="toggle" onclick="clearChat()">🗑️</button>
         <button class="toggle" onclick="toggleTheme()">🌗</button>
         <button class="toggle" onclick="clearPuter()">🔁 Credits</button>
+        <div class="select-wrap">
         <select id="imageModel">
         <option value="google/imagen-4.0-ultra">Imagen 4 Ultra</option>
         <option value="google/imagen-4.0-fast">Imagen 4 Fast</option>
         <option value="gemini-3-pro-image-preview">Nano Banana (Gemini Image)</option>
         </select>
+      </div>
       </div>
     </header>
 
@@ -1200,6 +1229,7 @@ updateHeaderTitle();
 </script>
 </body>
 </html>
+
 
 
 
