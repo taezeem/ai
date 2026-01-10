@@ -1243,12 +1243,11 @@ saveMessage("bot", { type: "video", src: video.src });
 
     /* ================= TEXT ================= */
     else {
-      const res = await fetch("/.netlify/functions/hackoAI", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: prompt })
-      });
-
+      const res = await fetch("https://hackoai-worker.tariqmtaezeem.workers.dev", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ text: prompt })
+  });
       const text = await res.text();
 
 let data;
@@ -1291,6 +1290,7 @@ updateHeaderTitle();
 </script>
 </body>
 </html>
+
 
 
 
