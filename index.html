@@ -62,10 +62,6 @@ body{
   transition: transform 0.3s ease;
 }
 
-  /* hidden state (ALL screens) */
-.sidebar.hidden{
-  transform: translateX(-100%);
-}
 
 .sidebar-header{
   padding:14px 16px;
@@ -333,7 +329,17 @@ body.dark #chat::-webkit-scrollbar-thumb {background-color: #2563eb;border: 2px 
   .sidebar.is-hidden {
   transform: translateX(-100%);
 }
+  @media (min-width: 769px) {
+  .sidebar.is-hidden {
+    width: 0;
+    min-width: 0;
+    padding: 0;
+    border-right: none;
+    overflow: hidden;
+  }
+}
   .menu-close-btn {
+  display: none;
   position: absolute;
   top: 11px;
   right: 12px;
@@ -363,9 +369,6 @@ body.dark #chat::-webkit-scrollbar-thumb {background-color: #2563eb;border: 2px 
     left:0;
     height:100%;
     z-index:20;
-  }
-  .sidebar.show {      /* class to toggle */
-    transform: translateX(0);
   }
   .menu-btn { display:block !important; }
   .scroll-bottom { right: 20px; }
@@ -1270,6 +1273,7 @@ updateHeaderTitle();
 </script>
 </body>
 </html>
+
 
 
 
