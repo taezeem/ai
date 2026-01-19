@@ -959,33 +959,41 @@ let lastUserPrompt = null;
 let isGenerating = false;
 let installPrompt;
 
-if (document.getElementById("installBtn")) return;
-btn.id = "installBtn";
+if (document.getElementById("installBtn")) {
+  // already exists, do nothing
+} else {
+  // create inside beforeinstallprompt
+}
 
 window.addEventListener('beforeinstallprompt', e => {
   e.preventDefault();
+  if (document.getElementById("installBtn")) return;
+
   installPrompt = e;
-  
+
   const btn = document.createElement('button');
+  btn.id = "installBtn";
   btn.textContent = '📲 Install App';
+
   btn.style.cssText = `
     position:fixed;bottom:80px;right:20px;
     background:#2563eb;color:#fff;border:none;
     padding:10px 20px;border-radius:50px;
     font-weight:600;cursor:pointer;
     box-shadow:0 10px 30px rgba(37,99,235,0.5);
-    z-index:999;animation: bounce 2s infinite;
+    z-index:999;animation:bounce 2s infinite;
   `;
-  
+
   btn.onclick = async () => {
     installPrompt.prompt();
     await installPrompt.userChoice;
     installPrompt = null;
     btn.remove();
   };
-  
+
   document.body.appendChild(btn);
 });
+
 
 // Add bounce animation
 const style = document.createElement('style');
@@ -1116,10 +1124,17 @@ function speakText(text) {
   currentUtterance.pitch = 1;
   currentUtterance.volume = 0.9;
   
-  const voices = window.speechSynthesis.getVoices();
-  speechSynthesis.onvoiceschanged = () => {};
+  let voices = [];
+
+function loadVoices() {
+  voices = speechSynthesis.getVoices();
+}
+
+loadVoices();
+speechSynthesis.onvoiceschanged = loadVoices;
+
   const enVoice = voices.find(v => v.lang.startsWith('en')) || voices[0];
-  if (enVoice) currentUtterance.voice = enVoice;
+if (enVoice) currentUtterance.voice = enVoice;
 
   window.speechSynthesis.speak(currentUtterance);
 }
@@ -1139,7 +1154,7 @@ function renderMath(d) {
   if (window.renderMathInElement) {
     renderMathInElement(d, {
       delimiters: [
-        { left: "$", right: "$", display: true },
+        { left: "$$", right: "$$", display: true },
         { left: "\\(", right: "\\)", display: false }
       ]
     });
@@ -1308,7 +1323,7 @@ function editTitle(){
   input.focus();
   input.select();
   
-  const save=()=>{
+  const save = () => {
     const newTitle=input.value.trim();
     if(newTitle){
       session.title=newTitle;
@@ -1841,6 +1856,8 @@ async function generateTitle(userPrompt, botReply) {
 }
 
 async function send() {
+  if (isGenerating) return;
+  isGenerating = true;
   if (isGenerating) {
     alert("Generation already in progress");
     return;
