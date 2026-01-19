@@ -946,6 +946,39 @@ body.dark #chat::-webkit-scrollbar-thumb {background-color: #2563eb;border: 2px 
 <input type="file" id="importFile" accept=".json" style="display:none" onchange="handleImport(event)">
 
 <script>
+// Add this to your main JS
+if (window.location.search.includes('action=new')) {
+  newChat();
+}
+if (window.location.search.includes('action=image')) {
+  input.value = '/img ';
+  input.focus();
+}
+if (window.location.search.includes('action=voice')) {
+  toggleVoiceInput();
+}
+
+// Share target handler
+if (window.location.pathname === '/share') {
+  // Handle shared content
+  const params = new URLSearchParams(window.location.search);
+  const text = params.get('text');
+  if (text) {
+    input.value = text;
+  }
+}
+
+if ('launchQueue' in window) {
+  launchQueue.setConsumer((launchParams) => {
+    if (launchParams.files && launchParams.files.length) {
+      launchParams.files[0].getFile().then(file => {
+        file.text().then(content => {
+          input.value = content;
+        });
+      });
+    }
+  });
+}
 // ===== VOICE GLOBALS =====
 let recognition = null;
 let ttsEnabled = localStorage.getItem('hackoai_tts') === 'true';
