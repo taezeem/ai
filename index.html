@@ -947,41 +947,31 @@ body.dark #chat::-webkit-scrollbar-thumb {background-color: #2563eb;border: 2px 
 
 <script>
 
-let deferredPrompt;
+let installPrompt;
 
-window.addEventListener('beforeinstallprompt', (e) => {
+window.addEventListener('beforeinstallprompt', e => {
   e.preventDefault();
-  deferredPrompt = e;
+  installPrompt = e;
   
-  // Show custom install button
-  const installBtn = document.createElement('button');
-  installBtn.textContent = '📲 Install HackoAI';
-  installBtn.className = 'install-prompt';
-  installBtn.style.cssText = `
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    background: linear-gradient(135deg, #2563eb, #1d4ed8);
-    color: #fff;
-    border: none;
-    padding: 12px 24px;
-    border-radius: 50px;
-    font-weight: 600;
-    cursor: pointer;
-    box-shadow: 0 10px 30px rgba(37,99,235,0.5);
-    z-index: 9999;
-    animation: bounce 2s infinite;
+  const btn = document.createElement('button');
+  btn.textContent = '📲 Install App';
+  btn.style.cssText = `
+    position:fixed;bottom:80px;right:20px;
+    background:#2563eb;color:#fff;border:none;
+    padding:10px 20px;border-radius:50px;
+    font-weight:600;cursor:pointer;
+    box-shadow:0 10px 30px rgba(37,99,235,0.5);
+    z-index:999;animation:pulse 2s infinite;
   `;
   
-  installBtn.onclick = async () => {
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    console.log(`User response: ${outcome}`);
-    deferredPrompt = null;
-    installBtn.remove();
+  btn.onclick = async () => {
+    installPrompt.prompt();
+    await installPrompt.userChoice;
+    installPrompt = null;
+    btn.remove();
   };
   
-  document.body.appendChild(installBtn);
+  document.body.appendChild(btn);
 });
 
 // Add bounce animation
@@ -993,18 +983,6 @@ style.textContent = `
   }
 `;
 document.head.appendChild(style);
-	
-// Add this to your main JS
-if (window.location.search.includes('action=new')) {
-  newChat();
-}
-if (window.location.search.includes('action=image')) {
-  input.value = '/img ';
-  input.focus();
-}
-if (window.location.search.includes('action=voice')) {
-  toggleVoiceInput();
-}
 
 // Share target handler
 if (window.location.pathname === '/share') {
@@ -2009,11 +1987,8 @@ getCurrentSession().messages.forEach(m=>render(m.role,m.content,false));
 renderHistory();
 updateHeaderTitle();
 
-
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js')
-    .then(reg => console.log('✅ SW registered'))
-    .catch(err => console.log('❌ SW failed:', err));
+  navigator.serviceWorker.register('/sw.js');
 }
 </script>
 
