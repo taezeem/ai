@@ -1,1 +1,131 @@
-{"name":"","short_name":"","icons":[{"src":"/android-chrome-192x192.png","sizes":"192x192","type":"image/png"},{"src":"/android-chrome-512x512.png","sizes":"512x512","type":"image/png"}],"theme_color":"#ffffff","background_color":"#ffffff","display":"standalone"}
+{
+  "name": "HackoAI • Voice Edition 🎤",
+  "short_name": "HackoAI",
+  "description": "Next-gen AI chat with voice input, TTS, multi-model support, image/video generation, and full offline capability. Built by Bro.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#2563eb",
+  "background_color": "#020617",
+  "lang": "en-US",
+  "dir": "ltr",
+  
+  "categories": ["productivity", "education", "utilities", "entertainment"],
+  
+  "icons": [
+    {
+      "src": "/android-chrome-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/android-chrome-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    },
+    {
+      "src": "/favicon-32x32.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "/favicon-16x16.png",
+      "sizes": "16x16",
+      "type": "image/png"
+    }
+  ],
+  
+  "screenshots": [
+    {
+      "src": "/screenshots/mobile-chat.png",
+      "sizes": "540x720",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Chat interface with voice input"
+    },
+    {
+      "src": "/screenshots/desktop-chat.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Desktop view with sidebar"
+    }
+  ],
+  
+  "shortcuts": [
+    {
+      "name": "New Chat",
+      "short_name": "New",
+      "description": "Start a fresh conversation",
+      "url": "/?action=new",
+      "icons": [{ "src": "/icons/new-chat.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Image Generation",
+      "short_name": "Image",
+      "description": "Generate AI images",
+      "url": "/?action=image",
+      "icons": [{ "src": "/icons/image-gen.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Voice Chat",
+      "short_name": "Voice",
+      "description": "Start voice conversation",
+      "url": "/?action=voice",
+      "icons": [{ "src": "/icons/voice.png", "sizes": "96x96" }]
+    }
+  ],
+  
+  "related_applications": [],
+  "prefer_related_applications": false,
+  
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  
+  "share_target": {
+    "action": "/share",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  },
+  
+  "protocol_handlers": [
+    {
+      "protocol": "web+hackoai",
+      "url": "/?prompt=%s"
+    }
+  ],
+  
+  "file_handlers": [
+    {
+      "action": "/open-file",
+      "accept": {
+        "text/plain": [".txt", ".md"],
+        "application/json": [".json"]
+      }
+    }
+  ],
+  
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
+  
+  "iarc_rating_id": "",
+  
+  "prefer_dark_theme": true,
+  
+  "launch_handler": {
+    "client_mode": ["navigate-existing", "auto"]
+  }
+}
