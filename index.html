@@ -1009,13 +1009,22 @@ if (window.location.search.includes('action=voice')) {
 // Share target handler
 if (window.location.pathname === '/share') {
   // Handle shared content
+window.addEventListener('DOMContentLoaded', () => {
   const params = new URLSearchParams(window.location.search);
-  const text = params.get('text');
-  if (text) {
-    input.value = text;
+  const sharedText = params.get('text');
+  const sharedUrl = params.get('url');
+  const sharedTitle = params.get('title');
+  
+  if (sharedText || sharedUrl || sharedTitle) {
+    let content = '';
+    if (sharedTitle) content += sharedTitle + '\n';
+    if (sharedText) content += sharedText + '\n';
+    if (sharedUrl) content += sharedUrl;
+    
+    input.value = content.trim();
+    input.focus();
   }
-}
-
+});
 if ('launchQueue' in window) {
   launchQueue.setConsumer((launchParams) => {
     if (launchParams.files && launchParams.files.length) {
