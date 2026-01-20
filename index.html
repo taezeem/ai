@@ -14,7 +14,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/github-dark.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/highlight.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/languages/go.min.js"></script>
-
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/katex.min.css">
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/contrib/auto-render.min.js"
@@ -1690,7 +1690,8 @@ function render(role, content, saveIt = true) {
     d.appendChild(video);
   } 
   else {
-    d.innerHTML = marked.parse(preprocess(String(content)));
+    // Update render function
+	d.innerHTML = DOMPurify.sanitize(marked.parse(preprocess(String(content))));
     renderMath(d);
   }
 
@@ -1775,7 +1776,6 @@ async function streamBotInChunks(fullText, chunkSize = 50) {
   for (let i = 0; i < fullText.length; i += chunkSize) {
     const chunk = fullText.slice(i, i + chunkSize);
     renderedText += chunk;
-    import DOMPurify from 'dompurify';
 	d.innerHTML = DOMPurify.sanitize(marked.parse(preprocess(String(content))));
     renderMath(d);
     chat.scrollTop = chat.scrollHeight;
