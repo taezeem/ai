@@ -946,130 +946,226 @@ body.dark #chat::-webkit-scrollbar-thumb {background-color: #2563eb;border: 2px 
 <input type="file" id="importFile" accept=".json" style="display:none" onchange="handleImport(event)">
 
 <script>
-const chat=document.getElementById("chat");
-const input=document.getElementById("input");
-const sidebar=document.getElementById("sidebar");
-const historyList=document.getElementById("historyList");
-const searchBox=document.getElementById("searchBox");
-const scrollBottom=document.getElementById("scrollBottom");
-const charCounter=document.getElementById("charCounter");
-const headerTitle=document.getElementById("headerTitle");
+// ===== INDEXEDDB SETUP =====
+const DB_NAME = 'HackoAI_DB';
+const DB_VERSION = 1;
+let db = null;
+
+async function openDB() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(DB_NAME, DB_VERSION);
+    
+    request.onerror = () => reject(request.error);
+    request.onsuccess = () => {
+      db = request.result;
+      resolve(db);
+    };
+    
+    request.onupgradeneeded = (e) => {
+      const database = e.target.result;
+      
+      if (!database.objectStoreNames.contains('chats')) {
+        const chatStore = database.createObjectStore('chats', { keyPath: 'id' });
+        chatStore.createIndex('timestamp', 'timestamp', { unique: false });
+        chatStore.createIndex('pinned', 'pinned', { unique: false });
+      }
+      
+      if (!database.objectStoreNames.contains('media')) {
+        database.createObjectStore('media', { keyPath: 'id' });
+      }
+    };
+  });
+}
+
+async function saveChat(chatData) {
+  if (!db) await openDB();
+  const tx = db.transaction('chats', 'readwrite');
+  const store = tx.objectStore('chats');
+  store.put(chatData);
+  return new Promise((resolve, reject) => {
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+async function getChat(id) {
+  if (!db) await openDB();
+  const tx = db.transaction('chats', 'readonly');
+  const store = tx.objectStore('chats');
+  return new Promise((resolve, reject) => {
+    const request = store.get(id);
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+async function getAllChats() {
+  if (!db) await openDB();
+  const tx = db.transaction('chats', 'readonly');
+  const store = tx.objectStore('chats');
+  return new Promise((resolve, reject) => {
+    const request = store.getAll();
+    request.onsuccess = () => resolve(request.result || []);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+async function deleteChat(id) {
+  if (!db) await openDB();
+  const tx = db.transaction('chats', 'readwrite');
+  const store = tx.objectStore('chats');
+  store.delete(id);
+  return new Promise((resolve, reject) => {
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+async function saveMedia(id, blob) {
+  if (!db) await openDB();
+  const tx = db.transaction('media', 'readwrite');
+  const store = tx.objectStore('media');
+  store.put({ id, blob });
+  return new Promise((resolve, reject) => {
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+async function getMedia(id) {
+  if (!db) await openDB();
+  const tx = db.transaction('media', 'readonly');
+  const store = tx.objectStore('media');
+  return new Promise((resolve, reject) => {
+    const request = store.get(id);
+    request.onsuccess = () => resolve(request.result?.blob);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+// ===== GLOBALS =====
+const chat = document.getElementById("chat");
+const input = document.getElementById("input");
+const sidebar = document.getElementById("sidebar");
+const historyList = document.getElementById("historyList");
+const searchBox = document.getElementById("searchBox");
+const scrollBottom = document.getElementById("scrollBottom");
+const charCounter = document.getElementById("charCounter");
+const headerTitle = document.getElementById("headerTitle");
+const CURRENT_KEY = "hackoai_current";
 const PREPOPUP_KEY = "hackoai_prepopup_clicked";
+
+let sessions = {};
+let currentId = localStorage.getItem(CURRENT_KEY) || null;
 let lastUserPrompt = null;
 let isGenerating = false;
 let installPrompt;
 
-if (document.getElementById("installBtn")) {
-  // already exists, do nothing
-} else {
-  // create inside beforeinstallprompt
-}
-
-window.addEventListener('beforeinstallprompt', e => {
-  e.preventDefault();
-  if (document.getElementById("installBtn")) return;
-
-  installPrompt = e;
-
-  const btn = document.createElement('button');
-  btn.id = "installBtn";
-  btn.textContent = '📲 Install App';
-
-  btn.style.cssText = `
-    position:fixed;bottom:80px;right:20px;
-    background:#2563eb;color:#fff;border:none;
-    padding:10px 20px;border-radius:50px;
-    font-weight:600;cursor:pointer;
-    box-shadow:0 10px 30px rgba(37,99,235,0.5);
-    z-index:999;animation:bounce 2s infinite;
-  `;
-
-  btn.onclick = async () => {
-    installPrompt.prompt();
-    await installPrompt.userChoice;
-    installPrompt = null;
-    btn.remove();
-  };
-
-  document.body.appendChild(btn);
-});
-
-
-// Add bounce animation
-const style = document.createElement('style');
-style.textContent = `
-  @keyframes bounce {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-10px); }
-  }
-  `;
-document.head.appendChild(style);
-
-// Share target handler
-if (window.location.pathname === '/share') {
-  // Handle shared content
-window.addEventListener('DOMContentLoaded', () => {
-  const params = new URLSearchParams(window.location.search);
-  const sharedText = params.get('text');
-  const sharedUrl = params.get('url');
-  const sharedTitle = params.get('title');
-  
-  if (sharedText || sharedUrl || sharedTitle) {
-    let content = '';
-    if (sharedTitle) content += sharedTitle + '\n';
-    if (sharedText) content += sharedText + '\n';
-    if (sharedUrl) content += sharedUrl;
-    
-    input.value = content.trim();
-    input.focus();
-  }
-});
-if ('launchQueue' in window) {
-  launchQueue.setConsumer((launchParams) => {
-    if (launchParams.files && launchParams.files.length) {
-      launchParams.files[0].getFile().then(file => {
-        file.text().then(content => {
-          input.value = content;
-        });
-      });
-    }
-  });
-}
-}
 // ===== VOICE GLOBALS =====
 let recognition = null;
 let ttsEnabled = localStorage.getItem('hackoai_tts') === 'true';
 let currentUtterance = null;
 
-// Initialize Speech Recognition
-if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  recognition = new SpeechRecognition();
-  recognition.continuous = false;
-  recognition.interimResults = false;
-  recognition.lang = 'en-US';
+// ===== INIT =====
+async function initApp() {
+  await openDB();
+  await loadAllSessions();
+  
+  if (!currentId || !sessions[currentId]) {
+    await createNewChat();
+  }
+  
+  renderHistory();
+  updateHeaderTitle();
+  loadChatMessages();
+  initVoice();
+  initEventListeners();
+}
 
-  recognition.onresult = (event) => {
-    const transcript = event.results[0][0].transcript;
-    input.value = transcript;
-    charCounter.textContent = `${transcript.length} chars`;
-    document.getElementById('voiceBtn').classList.remove('recording');
-    document.getElementById('voiceBtn').textContent = '🎤';
-  };
+async function loadAllSessions() {
+  const allChats = await getAllChats();
+  sessions = {};
+  allChats.forEach(chat => {
+    sessions[chat.id] = chat;
+  });
+  
+  if (Object.keys(sessions).length === 0) {
+    await createNewChat();
+  }
+}
 
-  recognition.onerror = (event) => {
-    console.error('Speech recognition error:', event.error);
-    document.getElementById('voiceBtn').classList.remove('recording');
-    document.getElementById('voiceBtn').textContent = '🎤';
-    if (event.error !== 'no-speech') {
-      alert('Voice input error: ' + event.error);
-    }
+async function createNewChat() {
+  currentId = Date.now().toString();
+  const newSession = {
+    id: currentId,
+    title: "New Chat",
+    messages: [],
+    timestamp: Date.now(),
+    pinned: false,
+    autoTitled: false
   };
+  sessions[currentId] = newSession;
+  await saveChat(newSession);
+  localStorage.setItem(CURRENT_KEY, currentId);
+}
 
-  recognition.onend = () => {
-    document.getElementById('voiceBtn').classList.remove('recording');
-    document.getElementById('voiceBtn').textContent = '🎤';
-  };
+function getCurrentSession() {
+  return sessions[currentId] || sessions[Object.keys(sessions)[0]];
+}
+
+async function saveSessions() {
+  const session = getCurrentSession();
+  if (session) {
+    await saveChat(session);
+    renderHistory();
+    updateHeaderTitle();
+  }
+}
+
+async function saveMessage(role, content) {
+  const session = getCurrentSession();
+  session.messages.push({ role, content });
+  session.timestamp = Date.now();
+  await saveSessions();
+}
+
+// ===== VOICE SETUP =====
+function initVoice() {
+  if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = 'en-US';
+
+    recognition.onresult = (event) => {
+      const transcript = event.results[0][0].transcript;
+      input.value = transcript;
+      charCounter.textContent = `${transcript.length} chars`;
+      document.getElementById('voiceBtn').classList.remove('recording');
+      document.getElementById('voiceBtn').textContent = '🎤';
+    };
+
+    recognition.onerror = (event) => {
+      console.error('Speech recognition error:', event.error);
+      document.getElementById('voiceBtn').classList.remove('recording');
+      document.getElementById('voiceBtn').textContent = '🎤';
+      if (event.error !== 'no-speech') {
+        alert('Voice input error: ' + event.error);
+      }
+    };
+
+    recognition.onend = () => {
+      document.getElementById('voiceBtn').classList.remove('recording');
+      document.getElementById('voiceBtn').textContent = '🎤';
+    };
+  }
+  
+  const btn = document.getElementById('ttsToggle');
+  if (btn) {
+    btn.classList.toggle('active', ttsEnabled);
+    btn.textContent = ttsEnabled ? '🔊' : '🔇';
+  }
 }
 
 function toggleVoiceInput() {
@@ -1125,32 +1221,14 @@ function speakText(text) {
   currentUtterance.pitch = 1;
   currentUtterance.volume = 0.9;
   
-  let voices = [];
-
-function loadVoices() {
-  voices = speechSynthesis.getVoices();
-}
-
-loadVoices();
-speechSynthesis.onvoiceschanged = loadVoices;
-
+  const voices = speechSynthesis.getVoices();
   const enVoice = voices.find(v => v.lang.startsWith('en')) || voices[0];
-if (enVoice) currentUtterance.voice = enVoice;
+  if (enVoice) currentUtterance.voice = enVoice;
 
   window.speechSynthesis.speak(currentUtterance);
 }
 
-// Set initial TTS button state
-document.addEventListener('DOMContentLoaded', () => {
-  const btn = document.getElementById('ttsToggle');
-  if (btn) {
-    btn.classList.toggle('active', ttsEnabled);
-    btn.textContent = ttsEnabled ? '🔊' : '🔇';
-  }
-});
-
-// ===== ORIGINAL CODE BELOW =====
-
+// ===== MATH RENDERING =====
 function renderMath(d) {
   if (window.renderMathInElement) {
     renderMathInElement(d, {
@@ -1162,6 +1240,7 @@ function renderMath(d) {
   }
 }
 
+// ===== MODEL SELECTION =====
 const textModelSelect = document.getElementById("textModel");
 const MODEL_KEY = "hackoai_text_model";
 
@@ -1173,13 +1252,8 @@ if (savedModel) {
 textModelSelect.addEventListener("change", () => {
   localStorage.setItem(MODEL_KEY, textModelSelect.value);
 });
-  
-if (!window.marked) {
-  const m = document.createElement("script");
-  m.src = "https://cdn.jsdelivr.net/npm/marked/marked.min.js";
-  document.head.appendChild(m);
-}
-  
+
+// ===== CLEAR PUTER =====
 async function clearPuter() {
   localStorage.clear();
   sessionStorage.clear();
@@ -1191,16 +1265,17 @@ async function clearPuter() {
 
   if (indexedDB.databases) {
     const dbs = await indexedDB.databases();
-    for (const db of dbs) {
-      indexedDB.deleteDatabase(db.name);
+    for (const dbInfo of dbs) {
+      indexedDB.deleteDatabase(dbInfo.name);
     }
   }
 
-  alert("Don't Get Greedy , Now Enjoy 💀");
+  alert("Don't Get Greedy, Now Enjoy 💀");
   location.reload();
 }
 
-function retryLast() {
+// ===== RETRY/EDIT =====
+async function retryLast() {
   if (!lastUserPrompt) return;
   isGenerating = false;
 
@@ -1216,8 +1291,8 @@ function retryLast() {
   chat.innerHTML = "";
   session.messages.forEach(m => render(m.role, m.content, false));
 
-  getCurrentSession().autoTitled = false;
-  saveSessions();
+  session.autoTitled = false;
+  await saveSessions();
 
   input.value = lastUserPrompt;
   send();
@@ -1228,73 +1303,298 @@ function editMessage(oldContent) {
   input.focus();
 }
 
-const SESSIONS_KEY = "hackoai_sessions";
-const CURRENT_KEY = "hackoai_current";
-
-let sessions = loadSessions();
-let currentId = localStorage.getItem(CURRENT_KEY) || null;
-
-function loadSessions() {
-  try {
-    return JSON.parse(localStorage.getItem(SESSIONS_KEY)) || {};
-  } catch {
-    localStorage.removeItem(SESSIONS_KEY);
-    return {};
-  }
+// ===== CHAT HISTORY =====
+function groupByTime(sessions) {
+  const now = Date.now();
+  const day = 86400000;
+  
+  const groups = {
+    pinned: [],
+    today: [],
+    yesterday: [],
+    week: [],
+    older: []
+  };
+  
+  sessions.forEach(s => {
+    if (s.pinned) {
+      groups.pinned.push(s);
+      return;
+    }
+    const diff = now - s.timestamp;
+    if (diff < day) groups.today.push(s);
+    else if (diff < day * 2) groups.yesterday.push(s);
+    else if (diff < day * 7) groups.week.push(s);
+    else groups.older.push(s);
+  });
+  
+  return groups;
 }
 
-function saveSessions() {
-  if (!sessions[currentId]) {
-    const ids = Object.keys(sessions);
-    currentId = ids.length ? ids[0] : Date.now().toString();
-    if (!sessions[currentId]) {
-      sessions[currentId] = {
-        id: currentId,
-        title: "New Chat",
-        messages: [],
-        timestamp: Date.now(),
-        pinned: false,
-        autoTitled: false
-      };
-    }
+function renderHistory() {
+  const query = searchBox.value.toLowerCase().trim();
+  let filtered = Object.values(sessions);
+  
+  if (query) {
+    filtered = filtered.filter(s =>
+      s.title.toLowerCase().includes(query) ||
+      s.messages.some(m =>
+        typeof m.content === "string" &&
+        m.content.toLowerCase().includes(query)
+      )
+    );
   }
+  
+  const sorted = filtered.sort((a, b) => b.timestamp - a.timestamp);
+  const groups = groupByTime(sorted);
+  
+  historyList.innerHTML = "";
+  
+  const renderGroup = (title, items) => {
+    if (items.length === 0) return;
+    
+    const groupDiv = document.createElement("div");
+    groupDiv.className = "history-group";
+    
+    const titleDiv = document.createElement("div");
+    titleDiv.className = "history-group-title";
+    titleDiv.textContent = title;
+    groupDiv.appendChild(titleDiv);
+    
+    items.forEach(s => {
+      const div = document.createElement("div");
+      div.className = "history-item" + (s.id === currentId ? " active" : "") + (s.pinned ? " pinned" : "");
+      
+      const title = document.createElement("span");
+      title.className = "title";
+      title.textContent = s.title;
+      title.ondblclick = (e) => {
+        e.stopPropagation();
+        editChatTitle(s.id, title, div);
+      };
+      
+      const actions = document.createElement("div");
+      actions.className = "history-item-actions";
+      
+      const pin = document.createElement("button");
+      pin.className = "pin-chat";
+      pin.textContent = s.pinned ? "⭐" : "☆";
+      pin.onclick = (e) => {
+        e.stopPropagation();
+        togglePin(s.id);
+      };
+      
+      const del = document.createElement("button");
+      del.className = "delete-chat";
+      del.textContent = "✕";
+      del.onclick = (e) => {
+        e.stopPropagation();
+        deleteChatHandler(s.id);
+      };
+      
+      actions.appendChild(pin);
+      actions.appendChild(del);
+      
+      div.appendChild(title);
+      div.appendChild(actions);
+      div.onclick = () => loadChatHandler(s.id);
+      
+      groupDiv.appendChild(div);
+    });
+    
+    historyList.appendChild(groupDiv);
+  };
+  
+  renderGroup("📌 PINNED", groups.pinned);
+  renderGroup("TODAY", groups.today);
+  renderGroup("YESTERDAY", groups.yesterday);
+  renderGroup("THIS WEEK", groups.week);
+  renderGroup("OLDER", groups.older);
+}
 
-  localStorage.setItem(SESSIONS_KEY, JSON.stringify(sessions));
-  localStorage.setItem(CURRENT_KEY, currentId);
+async function togglePin(id) {
+  sessions[id].pinned = !sessions[id].pinned;
+  await saveSessions();
+}
+
+function editChatTitle(id, titleSpan, parentDiv) {
+  const session = sessions[id];
+  const oldTitle = session.title;
+  
+  const input = document.createElement("input");
+  input.type = "text";
+  input.className = "title-input";
+  input.value = oldTitle;
+  
+  input.onclick = (e) => e.stopPropagation();
+  
+  titleSpan.replaceWith(input);
+  input.focus();
+  input.select();
+  
+  const save = async () => {
+    const newTitle = input.value.trim();
+    if (newTitle && newTitle !== oldTitle) {
+      session.title = newTitle;
+      if (id === currentId) {
+        updateHeaderTitle();
+      }
+      await saveSessions();
+    }
+    
+    const newSpan = document.createElement("span");
+    newSpan.className = "title";
+    newSpan.textContent = session.title;
+    newSpan.ondblclick = (e) => {
+      e.stopPropagation();
+      editChatTitle(id, newSpan, parentDiv);
+    };
+    input.replaceWith(newSpan);
+  };
+  
+  input.onblur = save;
+  input.onkeydown = (e) => {
+    e.stopPropagation();
+    if (e.key === "Enter") {
+      e.preventDefault();
+      input.blur();
+    }
+    if (e.key === "Escape") {
+      input.value = oldTitle;
+      input.blur();
+    }
+  };
+}
+
+async function newChat() {
+  await createNewChat();
+  chat.innerHTML = "";
   renderHistory();
   updateHeaderTitle();
 }
 
-function getCurrentSession() {
-  if (!sessions[currentId]) saveSessions();
-  return sessions[currentId];
+async function loadChatHandler(id) {
+  currentId = id;
+  localStorage.setItem(CURRENT_KEY, currentId);
+  loadChatMessages();
+  renderHistory();
+  scrollToBottom();
 }
 
-function saveMessage(role, content) {
+function loadChatMessages() {
+  chat.innerHTML = "";
   const session = getCurrentSession();
-  session.messages.push({ role, content });
-  session.timestamp = Date.now();
-  saveSessions();
+  if (session && session.messages) {
+    session.messages.forEach(m => render(m.role, m.content, false));
+  }
 }
 
-function handleImport(e) {
+async function deleteChatHandler(id) {
+  if (!confirm("Delete this chat? 💀")) return;
+  
+  await deleteChat(id);
+  delete sessions[id];
+  
+  if (id === currentId) {
+    const remaining = Object.keys(sessions);
+    if (remaining.length > 0) {
+      await loadChatHandler(remaining[0]);
+    } else {
+      await newChat();
+    }
+  }
+  renderHistory();
+}
+
+async function clearChat() {
+  if (!confirm("Clear current chat? This cannot be undone 💀")) return;
+  const session = getCurrentSession();
+  session.messages = [];
+  session.title = "New Chat";
+  session.autoTitled = false;
+  await saveSessions();
+  chat.innerHTML = "";
+  render("bot", "**Chat cleared. Fresh slate 😎✨**", false);
+}
+
+function toggleSidebar() {
+  sidebar.classList.toggle("is-hidden");
+}
+
+if (window.innerWidth <= 768) {
+  sidebar.classList.add("is-hidden");
+}
+
+// ===== EXPORT/IMPORT =====
+function exportChat() {
+  const session = getCurrentSession();
+  let text = `# ${session.title}\n\n`;
+  session.messages.forEach(m => {
+    if (typeof m.content === "string") {
+      text += `**${m.role.toUpperCase()}:**\n${m.content}\n\n`;
+    } else {
+      text += `**${m.role.toUpperCase()}:**\n[${m.content.type.toUpperCase()}]\n\n`;
+    }
+  });
+  
+  const blob = new Blob([text], { type: "text/markdown" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${session.title.replace(/[^a-z0-9]/gi, '_')}.md`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function copyAll() {
+  const session = getCurrentSession();
+  let text = "";
+  session.messages.forEach(m => {
+    if (typeof m.content === "string") {
+      text += `${m.role.toUpperCase()}: ${m.content}\n\n`;
+    }
+  });
+  
+  navigator.clipboard.writeText(text);
+  alert("📋 Entire chat copied to clipboard!");
+}
+
+async function exportAll() {
+  const data = JSON.stringify(sessions, null, 2);
+  const blob = new Blob([data], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `hackoai_backup_${Date.now()}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importAll() {
+  document.getElementById("importFile").click();
+}
+
+async function handleImport(e) {
   const file = e.target.files[0];
   if (!file) return;
 
   const reader = new FileReader();
-  reader.onload = (ev) => {
+  reader.onload = async (ev) => {
     try {
       const imported = JSON.parse(ev.target.result);
       if (confirm("Import chats? This will merge with existing chats.")) {
         for (const id in imported) {
-          if (!sessions[id]) sessions[id] = imported[id];
-          else {
+          if (!sessions[id]) {
+            sessions[id] = imported[id];
+            await saveChat(imported[id]);
+          } else {
             const newId = Date.now().toString() + Math.floor(Math.random() * 1000);
             imported[id].id = newId;
             sessions[newId] = imported[id];
+            await saveChat(imported[id]);
           }
         }
-        saveSessions();
+        renderHistory();
         alert("✅ Chats imported successfully!");
       }
     } catch {
@@ -1304,360 +1604,71 @@ function handleImport(e) {
   reader.readAsText(file);
 }
 
-function updateHeaderTitle(){
-  const existingTitle=document.getElementById("headerTitle");
-  if(existingTitle){
-    existingTitle.textContent=getCurrentSession().title;
+// ===== UI UPDATES =====
+function updateHeaderTitle() {
+  const existingTitle = document.getElementById("headerTitle");
+  if (existingTitle) {
+    existingTitle.textContent = getCurrentSession().title;
   }
 }
 
-function editTitle(){
-  const session=getCurrentSession();
-  const currentTitle=session.title;
+function editTitle() {
+  const session = getCurrentSession();
+  const currentTitle = session.title;
   
-  const input=document.createElement("input");
-  input.type="text";
-  input.className="title-edit";
-  input.value=currentTitle;
+  const input = document.createElement("input");
+  input.type = "text";
+  input.className = "title-edit";
+  input.value = currentTitle;
   
   headerTitle.replaceWith(input);
   input.focus();
   input.select();
   
-  const save = () => {
-    const newTitle=input.value.trim();
-    if(newTitle){
-      session.title=newTitle;
-      saveSessions();
+  const save = async () => {
+    const newTitle = input.value.trim();
+    if (newTitle) {
+      session.title = newTitle;
+      await saveSessions();
     }
     
-    const span=document.createElement("span");
-    span.id="headerTitle";
-    span.textContent=session.title;
-    span.ondblclick=editTitle;
+    const span = document.createElement("span");
+    span.id = "headerTitle";
+    span.textContent = session.title;
+    span.ondblclick = editTitle;
     input.replaceWith(span);
   };
   
-  input.onblur=save;
-  input.onkeydown=(e)=>{
-    if(e.key==="Enter"){
+  input.onblur = save;
+  input.onkeydown = (e) => {
+    if (e.key === "Enter") {
       e.preventDefault();
       save();
     }
-    if(e.key==="Escape"){
-      input.value=currentTitle;
+    if (e.key === "Escape") {
+      input.value = currentTitle;
       save();
     }
   };
 }
 
-function groupByTime(sessions){
-  const now=Date.now();
-  const day=86400000;
-  
-  const groups={
-    pinned:[],
-    today:[],
-    yesterday:[],
-    week:[],
-    older:[]
-  };
-  
-  sessions.forEach(s=>{
-    if(s.pinned){
-      groups.pinned.push(s);
-      return;
-    }
-    const diff=now-s.timestamp;
-    if(diff<day) groups.today.push(s);
-    else if(diff<day*2) groups.yesterday.push(s);
-    else if(diff<day*7) groups.week.push(s);
-    else groups.older.push(s);
-  });
-  
-  return groups;
+function scrollToBottom() {
+  chat.scrollTo({ top: chat.scrollHeight, behavior: "smooth" });
 }
 
-function renderHistory(){
-  const query=searchBox.value.toLowerCase().trim();
-  let filtered=Object.values(sessions);
-  
-  if(query){
-    filtered=filtered.filter(s=>
-      s.title.toLowerCase().includes(query)||
-      s.messages.some(m =>
-        typeof m.content === "string" &&
-        m.content.toLowerCase().includes(query)
-      )
-    );
-  }
-  
-  const sorted=filtered.sort((a,b)=>b.timestamp-a.timestamp);
-  const groups=groupByTime(sorted);
-  
-  historyList.innerHTML="";
-  
-  const renderGroup=(title,items)=>{
-    if(items.length===0) return;
-    
-    const groupDiv=document.createElement("div");
-    groupDiv.className="history-group";
-    
-    const titleDiv=document.createElement("div");
-    titleDiv.className="history-group-title";
-    titleDiv.textContent=title;
-    groupDiv.appendChild(titleDiv);
-    
-    items.forEach(s=>{
-      const div=document.createElement("div");
-      div.className="history-item"+(s.id===currentId?" active":"")+(s.pinned?" pinned":"");
-      
-      const title=document.createElement("span");
-      title.className="title";
-      title.textContent=s.title;
-      title.ondblclick=(e)=>{
-        e.stopPropagation();
-        editChatTitle(s.id,title,div);
-      };
-      
-      const actions=document.createElement("div");
-      actions.className="history-item-actions";
-      
-      const pin=document.createElement("button");
-      pin.className="pin-chat";
-      pin.textContent=s.pinned?"⭐":"☆";
-      pin.onclick=(e)=>{
-        e.stopPropagation();
-        togglePin(s.id);
-      };
-      
-      const del=document.createElement("button");
-      del.className="delete-chat";
-      del.textContent="✕";
-      del.onclick=(e)=>{
-        e.stopPropagation();
-        deleteChat(s.id);
-      };
-      
-      actions.appendChild(pin);
-      actions.appendChild(del);
-      
-      div.appendChild(title);
-      div.appendChild(actions);
-      div.onclick=()=>loadChat(s.id);
-      
-      groupDiv.appendChild(div);
-    });
-    
-    historyList.appendChild(groupDiv);
-  };
-  
-  renderGroup("📌 PINNED",groups.pinned);
-  renderGroup("TODAY",groups.today);
-  renderGroup("YESTERDAY",groups.yesterday);
-  renderGroup("THIS WEEK",groups.week);
-  renderGroup("OLDER",groups.older);
+function time() {
+  const d = new Date();
+  return d.getHours().toString().padStart(2, '0') + ":" +
+         d.getMinutes().toString().padStart(2, '0');
 }
 
-function togglePin(id){
-  sessions[id].pinned=!sessions[id].pinned;
-  saveSessions();
-}
-
-function editChatTitle(id,titleSpan,parentDiv){
-  const session=sessions[id];
-  const oldTitle=session.title;
-  
-  const input=document.createElement("input");
-  input.type="text";
-  input.className="title-input";
-  input.value=oldTitle;
-  
-  input.onclick=(e)=>e.stopPropagation();
-  
-  titleSpan.replaceWith(input);
-  input.focus();
-  input.select();
-  
-  const save=()=>{
-    const newTitle=input.value.trim();
-    if(newTitle&&newTitle!==oldTitle){
-      session.title=newTitle;
-      if(id===currentId){
-        updateHeaderTitle();
-      }
-      saveSessions();
-    }
-    
-    const newSpan=document.createElement("span");
-    newSpan.className="title";
-    newSpan.textContent=session.title;
-    newSpan.ondblclick=(e)=>{
-      e.stopPropagation();
-      editChatTitle(id,newSpan,parentDiv);
-    };
-    input.replaceWith(newSpan);
-  };
-  
-  input.onblur=save;
-  input.onkeydown=(e)=>{
-    e.stopPropagation();
-    if(e.key==="Enter"){
-      e.preventDefault();
-      input.blur();
-    }
-    if(e.key==="Escape"){
-      input.value=oldTitle;
-      input.blur();
-    }
-  };
-}
-
-function newChat(){
-  currentId=Date.now().toString();
-  sessions[currentId]={
-    id:currentId,
-    title:"New Chat",
-    messages:[],
-    timestamp:Date.now(),
-    pinned:false,
-    autoTitled: false
-  };
-  saveSessions();
-  chat.innerHTML="";
-}
-
-function loadChat(id){
-  currentId=id;
-  localStorage.setItem(CURRENT_KEY,currentId);
-  chat.innerHTML="";
-  getCurrentSession().messages.forEach(m=>render(m.role,m.content,false));
-  renderHistory();
-  scrollToBottom();
-}
-
-function deleteChat(id){
-  if(!confirm("Delete this chat? 💀")) return;
-  delete sessions[id];
-  
-  if(id===currentId){
-    const remaining=Object.keys(sessions);
-    if(remaining.length>0){
-      loadChat(remaining[0]);
-    }else{
-      newChat();
-    }
-  }
-  saveSessions();
-}
-
-function clearChat(){
-  if(!confirm("Clear current chat? This cannot be undone 💀")) return;
-  const session = getCurrentSession();
-  session.messages = [];
-  session.title = "New Chat";
-  session.autoTitled = false;
-  saveSessions();
-  chat.innerHTML = "";
-  render("bot","**Chat cleared. Fresh slate 😎✨**", false);
-}
-
-function toggleSidebar(){
-  sidebar.classList.toggle("is-hidden");
-}
-
-if (window.innerWidth <= 768) {
-  sidebar.classList.add("is-hidden");
-}
-
-function exportChat(){
-  const session=getCurrentSession();
-  let text=`# ${session.title}\n\n`;
-  session.messages.forEach(m => {
-    if (typeof m.content === "string") {
-      text += `**${m.role.toUpperCase()}:**\n${m.content}\n\n`;
-    } else {
-      text += `**${m.role.toUpperCase()}:**\n[${m.content.type.toUpperCase()}]\n\n`;
-    }
-  });
-  
-  const blob=new Blob([text],{type:"text/markdown"});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement("a");
-  a.href=url;
-  a.download=`${session.title.replace(/[^a-z0-9]/gi,'_')}.md`;
-  a.click();
-  URL.revokeObjectURL(url);
-}
-
-function copyAll(){
-  const session=getCurrentSession();
-  let text="";
-  session.messages.forEach(m=>{
-    if (typeof m.content === "string") {
-      text+=`${m.role.toUpperCase()}: ${m.content}\n\n`;
-    }
-  });
-  
-  navigator.clipboard.writeText(text);
-  alert("📋 Entire chat copied to clipboard!");
-}
-
-function exportAll(){
-  const data=JSON.stringify(sessions,null,2);
-  const blob=new Blob([data],{type:"application/json"});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement("a");
-  a.href=url;
-  a.download=`hackoai_backup_${Date.now()}.json`;
-  a.click();
-  URL.revokeObjectURL(url);
-}
-
-function importAll(){
-  document.getElementById("importFile").click();
-}
-
-chat.addEventListener("scroll",()=>{
-  const atBottom=chat.scrollHeight-chat.scrollTop-chat.clientHeight<50;
-  scrollBottom.classList.toggle("visible",!atBottom);
-});
-
-function scrollToBottom(){
-  chat.scrollTo({top:chat.scrollHeight,behavior:"smooth"});
-}
-
-input.addEventListener("input",()=>{
-  const len=input.value.length;
-  charCounter.textContent=`${len} chars`;
-  charCounter.style.color=len>4000?"#ef4444":len>2000?"#f59e0b":"var(--muted)";
-});
-
-searchBox.addEventListener("input",renderHistory);
-
-document.addEventListener("keydown",(e)=>{
-  if(e.ctrlKey&&e.key==="b"){
-    e.preventDefault();
-    newChat();
-  }
-  if(e.ctrlKey&&e.key==="k"){
-    e.preventDefault();
-    searchBox.focus();
-  }
-});
-
-function time(){
-  const d=new Date();
-  return d.getHours().toString().padStart(2,'0')+":"+
-         d.getMinutes().toString().padStart(2,'0');
-}
-
-function preprocess(text){
+function preprocess(text) {
   return text
     .replace(/~~(.*?)~~/g, "$1")
     .replace(/<\/?(s|del|strike)>/gi, "");
 }
 
+// ===== RENDER MESSAGE =====
 function render(role, content, saveIt = true) {
   const d = document.createElement("div");
   d.className = "msg " + role;
@@ -1750,6 +1761,7 @@ function render(role, content, saveIt = true) {
   return d;
 }
 
+// ===== STREAMING =====
 async function streamBotInChunks(fullText, chunkSize = 50) {
   const d = document.createElement("div");
   d.className = "msg bot";
@@ -1757,8 +1769,8 @@ async function streamBotInChunks(fullText, chunkSize = 50) {
 
   let renderedText = "";
   const session = getCurrentSession();
-  saveMessage("bot", "");
-  const botIndex = getCurrentSession().messages.length - 1;
+  await saveMessage("bot", "");
+  const botIndex = session.messages.length - 1;
 
   for (let i = 0; i < fullText.length; i += chunkSize) {
     const chunk = fullText.slice(i, i + chunkSize);
@@ -1768,7 +1780,7 @@ async function streamBotInChunks(fullText, chunkSize = 50) {
     chat.scrollTop = chat.scrollHeight;
 
     session.messages[botIndex].content = renderedText;
-    localStorage.setItem(SESSIONS_KEY, JSON.stringify(sessions));
+    await saveChat(session);
 
     await new Promise(r => setTimeout(r, 15));
   }
@@ -1804,48 +1816,33 @@ async function streamBotInChunks(fullText, chunkSize = 50) {
     }, 100);
   }
 
-  saveSessions();
+  await saveSessions();
 }
 
-const prePopup = document.getElementById("prePopup");
-const goToPuter = document.getElementById("goToPuter");
-  
-if (localStorage.getItem(PREPOPUP_KEY) === "true") {
-  prePopup.style.display = "none";
-}
-  
-goToPuter.addEventListener("click", () => {
-  localStorage.setItem(PREPOPUP_KEY, "true");
-  prePopup.style.display = "none";
-  chat.style.pointerEvents = "auto";
-  window.open("https://puter.com/dashboard", "_blank");
-});
-
+// ===== AUTO TITLE =====
 async function generateTitle(userPrompt, botReply) {
   try {
     const res = await fetch("https://hackoai-worker.tariqmtaezeem.workers.dev", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-  model: "deepseek/deepseek-r1-0528:free",
-  messages: [
-    {
-      role: "system",
-      content: "Create a short chat title (3–5 words). No quotes."
-    },
-    {
-      role: "user",
-      content: `User: ${userPrompt}\nAssistant: ${botReply}`
-    }
-  ]
-})
+        model: "deepseek/deepseek-r1-0528:free",
+        messages: [
+          {
+            role: "system",
+            content: "Create a short chat title (3–5 words). No quotes."
+          },
+          {
+            role: "user",
+            content: `User: ${userPrompt}\nAssistant: ${botReply}`
+          }
+        ]
+      })
     });
 
     if (!res.ok) throw new Error("Title API error: " + res.status);
 
     const data = await res.json();
-
-    // Safe fallback
     const rawTitle = data.choices?.[0]?.message?.content || "New Chat";
     const cleanTitle = rawTitle.replace(/["'\n]/g, "").trim().slice(0, 40);
 
@@ -1856,6 +1853,7 @@ async function generateTitle(userPrompt, botReply) {
   }
 }
 
+// ===== SEND MESSAGE =====
 async function send() {
   if (isGenerating) {
     alert("Generation already in progress");
@@ -1872,7 +1870,7 @@ async function send() {
   const session = getCurrentSession();
   const shouldAutoTitle =
     !session.autoTitled &&
-    session.messages.filter(m => m.role === "user").length === 1 &&
+    session.messages.filter(m => m.role === "user").length === 0 &&
     !prompt.startsWith("/img") &&
     !prompt.startsWith("/vid");
 
@@ -1901,13 +1899,18 @@ async function send() {
       isGenerating = false;
 
       img.classList.add("ai-img");
-      img.onload = () => {
+      img.onload = async () => {
         const canvas = document.createElement("canvas");
         canvas.width = img.naturalWidth;
         canvas.height = img.naturalHeight;
         canvas.getContext("2d").drawImage(img, 0, 0);
         const base64 = canvas.toDataURL();
-        saveMessage("bot", { type: "image", src: base64 });
+        
+        const mediaId = `img_${Date.now()}`;
+        const blob = await (await fetch(base64)).blob();
+        await saveMedia(mediaId, blob);
+        
+        await saveMessage("bot", { type: "image", src: base64, mediaId });
       };
 
       const div = document.createElement("div");
@@ -1923,7 +1926,7 @@ async function send() {
 
       const blob = await fetch(video.src).then(r => r.blob());
       const reader = new FileReader();
-      reader.onloadend = () => {
+      reader.onloadend = async () => {
         const div = document.createElement("div");
         div.className = "msg bot";
 
@@ -1939,7 +1942,9 @@ async function send() {
         chat.appendChild(div);
         chat.scrollTop = chat.scrollHeight;
 
-        saveMessage("bot", { type: "video", src: reader.result });
+        const mediaId = `vid_${Date.now()}`;
+        await saveMedia(mediaId, blob);
+        await saveMessage("bot", { type: "video", src: reader.result, mediaId });
       };
       reader.readAsDataURL(blob);
     } 
@@ -1972,7 +1977,7 @@ async function send() {
           const title = await generateTitle(firstUserPrompt, answer);
           session.title = title;
           session.autoTitled = true;
-          saveSessions();
+          await saveSessions();
           updateHeaderTitle();
         } catch (err) {
           console.error("Auto-title fallback:", err);
@@ -1991,18 +1996,129 @@ function toggleTheme() {
   document.body.classList.toggle("dark");
 }
 
-input.addEventListener("keydown", e => {
-  if (e.key === "Enter" && !e.shiftKey) {
-    e.preventDefault();
-    send();
-    return;
-  }
-  e.stopPropagation();
+// ===== EVENT LISTENERS =====
+function initEventListeners() {
+  input.addEventListener("input", () => {
+    const len = input.value.length;
+    charCounter.textContent = `${len} chars`;
+    charCounter.style.color = len > 4000 ? "#ef4444" : len > 2000 ? "#f59e0b" : "var(--muted)";
+  });
+
+  input.addEventListener("keydown", e => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      send();
+      return;
+    }
+    e.stopPropagation();
+  });
+
+  searchBox.addEventListener("input", renderHistory);
+
+  chat.addEventListener("scroll", () => {
+    const atBottom = chat.scrollHeight - chat.scrollTop - chat.clientHeight < 50;
+    scrollBottom.classList.toggle("visible", !atBottom);
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.ctrlKey && e.key === "b") {
+      e.preventDefault();
+      newChat();
+    }
+    if (e.ctrlKey && e.key === "k") {
+      e.preventDefault();
+      searchBox.focus();
+    }
+  });
+}
+
+// ===== PWA INSTALL =====
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  if (document.getElementById("installBtn")) return;
+
+  installPrompt = e;
+
+  const btn = document.createElement('button');
+  btn.id = "installBtn";
+  btn.textContent = '📲 Install App';
+
+  btn.style.cssText = `
+    position:fixed;bottom:80px;right:20px;
+    background:#2563eb;color:#fff;border:none;
+    padding:10px 20px;border-radius:50px;
+    font-weight:600;cursor:pointer;
+    box-shadow:0 10px 30px rgba(37,99,235,0.5);
+    z-index:999;animation:bounce 2s infinite;
+  `;
+
+  btn.onclick = async () => {
+    installPrompt.prompt();
+    await installPrompt.userChoice;
+    installPrompt = null;
+    btn.remove();
+  };
+
+  document.body.appendChild(btn);
 });
 
-getCurrentSession().messages.forEach(m=>render(m.role,m.content,false));
-renderHistory();
-updateHeaderTitle();
+const style = document.createElement('style');
+style.textContent = `
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+`;
+document.head.appendChild(style);
+
+// ===== SHARE TARGET =====
+if (window.location.pathname === '/share') {
+  window.addEventListener('DOMContentLoaded', () => {
+    const params = new URLSearchParams(window.location.search);
+    const sharedText = params.get('text');
+    const sharedUrl = params.get('url');
+    const sharedTitle = params.get('title');
+    
+    if (sharedText || sharedUrl || sharedTitle) {
+      let content = '';
+      if (sharedTitle) content += sharedTitle + '\n';
+      if (sharedText) content += sharedText + '\n';
+      if (sharedUrl) content += sharedUrl;
+      
+      input.value = content.trim();
+      input.focus();
+    }
+  });
+}
+
+if ('launchQueue' in window) {
+  launchQueue.setConsumer((launchParams) => {
+    if (launchParams.files && launchParams.files.length) {
+      launchParams.files[0].getFile().then(file => {
+        file.text().then(content => {
+          input.value = content;
+        });
+      });
+    }
+  });
+}
+
+// ===== PRE-POPUP =====
+const prePopup = document.getElementById("prePopup");
+const goToPuter = document.getElementById("goToPuter");
+  
+if (localStorage.getItem(PREPOPUP_KEY) === "true") {
+  prePopup.style.display = "none";
+}
+  
+goToPuter.addEventListener("click", () => {
+  localStorage.setItem(PREPOPUP_KEY, "true");
+  prePopup.style.display = "none";
+  window.open("https://puter.com/dashboard", "_blank");
+});
+
+// ===== INIT APP ON LOAD =====
+initApp()
 </script>
 </body>
 </html>
