@@ -324,7 +324,7 @@ select,button.toggle{
     180deg,
     rgba(15,23,42,0.95),
     rgba(2,6,23,0.95)
-  );
+    );
 	box-shadow:
     0 10px 30px rgba(0,0,0,0.45),
     inset 0 0 0 1px rgba(255,255,255,0.05);
@@ -1776,7 +1776,9 @@ async function streamBotInChunks(fullText, chunkSize = 50) {
   for (let i = 0; i < fullText.length; i += chunkSize) {
     const chunk = fullText.slice(i, i + chunkSize);
     renderedText += chunk;
-	d.innerHTML = DOMPurify.sanitize(marked.parse(preprocess(String(content))));
+    
+    // COMPLETELY FIXED VERSION:
+    d.innerHTML = DOMPurify.sanitize(marked.parse(preprocess(renderedText)));
     renderMath(d);
     chat.scrollTop = chat.scrollHeight;
 
