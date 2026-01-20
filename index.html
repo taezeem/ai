@@ -1775,7 +1775,8 @@ async function streamBotInChunks(fullText, chunkSize = 50) {
   for (let i = 0; i < fullText.length; i += chunkSize) {
     const chunk = fullText.slice(i, i + chunkSize);
     renderedText += chunk;
-    d.innerHTML = marked.parse(preprocess(renderedText));
+    import DOMPurify from 'dompurify';
+	d.innerHTML = DOMPurify.sanitize(marked.parse(preprocess(String(content))));
     renderMath(d);
     chat.scrollTop = chat.scrollHeight;
 
