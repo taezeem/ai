@@ -1054,6 +1054,7 @@ const charCounter = document.getElementById("charCounter");
 const headerTitle = document.getElementById("headerTitle");
 const CURRENT_KEY = "hackoai_current";
 const PREPOPUP_KEY = "hackoai_prepopup_clicked";
+const MODEL_KEY = "hackoai_text_model";
 
 let sessions = {};
 let currentId = localStorage.getItem(CURRENT_KEY) || null;
@@ -1258,17 +1259,15 @@ function renderMath(d) {
 
 // ===== MODEL SELECTION =====
 const textModelSelect = document.getElementById("textModel");
-const MODEL_KEY = "hackoai_text_model";
-
 const savedModel = localStorage.getItem(MODEL_KEY);
-if (savedModel) {
-  textModelSelect.value = savedModel;
+
+if (textModelSelect) {
+  if (savedModel) textModelSelect.value = savedModel;
+
+  textModelSelect.addEventListener("change", () => {
+    localStorage.setItem(MODEL_KEY, textModelSelect.value);
+  });
 }
-
-textModelSelect.addEventListener("change", () => {
-  localStorage.setItem(MODEL_KEY, textModelSelect.value);
-});
-
 // ===== CLEAR PUTER =====
 async function clearPuter() {
   localStorage.clear();
@@ -1718,7 +1717,12 @@ function render(role, content, saveIt = true) {
     d.appendChild(video);
   } 
   else {
-    d.innerHTML = marked.parse(preprocess(String(content)));
+    if (window.marked) {
+  d.innerHTML = marked.parse(preprocess(String(content)));
+ }
+	else {
+  	d.textContent = String(content);
+	}
     renderMath(d);
   }
 
@@ -1803,7 +1807,11 @@ async function streamBotInChunks(fullText, chunkSize = 50) {
   for (let i = 0; i < fullText.length; i += chunkSize) {
     const chunk = fullText.slice(i, i + chunkSize);
     renderedText += chunk;
+	if (window.marked) {
     d.innerHTML = marked.parse(preprocess(renderedText));
+	} else {
+	d.textContent = renderedText;
+	}
     renderMath(d);
     chat.scrollTop = chat.scrollHeight;
 
@@ -2134,17 +2142,18 @@ if ('launchQueue' in window) {
 // ===== PRE-POPUP =====
 const prePopup = document.getElementById("prePopup");
 const goToPuter = document.getElementById("goToPuter");
-  
-if (localStorage.getItem(PREPOPUP_KEY) === "true") {
+
+if (prePopup && localStorage.getItem(PREPOPUP_KEY) === "true") {
   prePopup.style.display = "none";
 }
-  
-goToPuter.addEventListener("click", () => {
-  localStorage.setItem(PREPOPUP_KEY, "true");
-  prePopup.style.display = "none";
-  window.open("https://puter.com/dashboard", "_blank");
-});
 
+if (goToPuter && prePopup) {
+  goToPuter.addEventListener("click", () => {
+    localStorage.setItem(PREPOPUP_KEY, "true");
+    prePopup.style.display = "none";
+    window.open("https://puter.com/dashboard", "_blank");
+  });
+}
 // ===== INIT APP ON LOAD =====
 document.addEventListener("DOMContentLoaded", () => {
   initApp();
