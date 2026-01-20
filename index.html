@@ -601,6 +601,7 @@ body.dark #chat::-webkit-scrollbar-thumb {background-color: #2563eb;border: 2px 
     180deg,
     rgba(10,15,30,0.9),
     rgba(2,6,23,0.95)
+   );
   }
   
   .menu-btn, .menu-close-btn { 
@@ -1691,7 +1692,7 @@ function render(role, content, saveIt = true) {
   } 
   else {
     // Update render function
-	d.innerHTML = DOMPurify.sanitize(marked.parse(preprocess(renderedText)));
+	d.innerHTML = DOMPurify.sanitize(marked.parse(preprocess(String(content))));
     renderMath(d);
   }
 
