@@ -2154,6 +2154,13 @@ if (goToPuter && prePopup) {
     window.open("https://puter.com/dashboard", "_blank");
   });
 }
+	if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js')
+      .then(() => console.log('🔥 HackoAI SW registered'))
+      .catch(err => console.error('SW failed:', err));
+  });
+}
 // ===== INIT APP ON LOAD =====
 document.addEventListener("DOMContentLoaded", () => {
   initApp();
