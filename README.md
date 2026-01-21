@@ -12,7 +12,6 @@ HackoAI • Voice Edition is a **client-side AI chat UI** that lets you:
 
 * 🎙️ Talk to the app using speech recognition
 * 🔊 Hear responses with Text-to-Speech
-* ⚡ Run fully in the browser (no backend stress)
 * 🧼 Enjoy a clean, hacker-style UI
 
 Basically: *Jarvis energy, budget edition*.
@@ -39,7 +38,7 @@ Basically: *Jarvis energy, budget edition*.
 * Web Speech API
 * localStorage
 
-Zero dependencies. Zero backend. Zero pain.
+Zero dependencies. Zero pain.
 
 ---
 
@@ -67,7 +66,7 @@ Zero dependencies. Zero backend. Zero pain.
 ## ⚙️ Settings
 
 * TTS Toggle is saved automatically
-* Refresh-safe thanks to `localStorage`
+* Refresh-safe thanks to `IndexedDB`
 * No accounts. No tracking. No nonsense.
 
 ---
