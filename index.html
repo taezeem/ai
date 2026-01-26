@@ -1905,7 +1905,7 @@ async function streamBotInChunks(fullText, baseChunkSize = 50) {
 // ===== AUTO TITLE =====
 async function generateTitle(userPrompt, botReply) {
   try {
-    const res = await fetch("https://hackoai-worker.tariqmtaezeem.workers.dev", {
+    const res = await fetch("https://hackoai-worker.tariqmtaezeem.workers.dev/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -2054,7 +2054,7 @@ else if (isVideo) {
 
       messages.push({ role: "user", content: prompt });
 
-      const res = await fetch("https://hackoai-worker.tariqmtaezeem.workers.dev", {
+      const res = await fetch("https://hackoai-worker.tariqmtaezeem.workers.dev/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ model: model, messages: messages })
