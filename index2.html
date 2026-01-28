@@ -1908,7 +1908,7 @@ async function generateTitle(userPrompt, botReply) {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: model,
+        model: "deepseek-ai/DeepSeek-R1",
         messages: [
           {
             role: "system",
