@@ -961,6 +961,25 @@ body.dark #chat::-webkit-scrollbar-thumb {background-color: #2563eb;border: 2px 
 <input type="file" id="importFile" accept=".json" style="display:none" onchange="handleImport(event)">
 
 <script>
+// ===== GLOBALS =====
+const chat = document.getElementById("chat");
+const input = document.getElementById("input");
+const sidebar = document.getElementById("sidebar");
+const historyList = document.getElementById("historyList");
+const searchBox = document.getElementById("searchBox");
+const scrollBottom = document.getElementById("scrollBottom");
+const charCounter = document.getElementById("charCounter");
+const headerTitle = document.getElementById("headerTitle");
+const CURRENT_KEY = "hackoai_current";
+const PREPOPUP_KEY = "hackoai_prepopup_clicked";
+const MODEL_KEY = "hackoai_text_model";
+
+let sessions = {};
+let currentId = localStorage.getItem(CURRENT_KEY) || null;
+let lastUserPrompt = null;
+let isGenerating = false;
+let installPrompt;
+	
 // ===== INDEXEDDB SETUP =====
 const DB_NAME = 'HackoAI_DB';
 const DB_VERSION = 1;
@@ -1057,25 +1076,6 @@ async function getMedia(id) {
     request.onerror = () => reject(request.error);
   });
 }
-
-// ===== GLOBALS =====
-const chat = document.getElementById("chat");
-const input = document.getElementById("input");
-const sidebar = document.getElementById("sidebar");
-const historyList = document.getElementById("historyList");
-const searchBox = document.getElementById("searchBox");
-const scrollBottom = document.getElementById("scrollBottom");
-const charCounter = document.getElementById("charCounter");
-const headerTitle = document.getElementById("headerTitle");
-const CURRENT_KEY = "hackoai_current";
-const PREPOPUP_KEY = "hackoai_prepopup_clicked";
-const MODEL_KEY = "hackoai_text_model";
-
-let sessions = {};
-let currentId = localStorage.getItem(CURRENT_KEY) || null;
-let lastUserPrompt = null;
-let isGenerating = false;
-let installPrompt;
 
 // ===== VOICE GLOBALS =====
 let recognition = null;
